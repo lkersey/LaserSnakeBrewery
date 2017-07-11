@@ -4,20 +4,20 @@
 
 #define ONE_WIRE_BUS 13
 #define DEBUG true
-#define updateInterval 5000 //update the status every 5seconds
-unsigned long lastUpdateTime = 0;
+#define UPDATE_INTERVAL 5000 //update the status every 5seconds
+unsigned long last_update_time = 0;
 
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
-/* Adress of 1-wire sensors can be found by following the tutorial at 
+/* Address of 1-wire sensors can be found by following the tutorial at 
  *   http://henrysch.capnfatz.com/henrys-bench/arduino-temperature-measurements/ds18b20-arduino-user-manual-introduction-and-contents/ds18b20-user-manual-part-2-getting-the-device-address/
  */
-DeviceAddress airTempSensor = {0x28, 0xFF, 0x7A, 0xF6, 0x82, 0x16, 0x03, 0x69};
-DeviceAddress vatTempSensor = {0x28, 0xFF, 0xE3, 0x9C, 0x82, 0x16, 0x04, 0x25};
-float airTemp;
-float vatTemp;
-unsigned long lastTempMeasurement = 0;
-unsigned long error_interval = 300000; //5min in ms
+DeviceAddress AIR_TEMP_SENOSR = {0x28, 0xFF, 0x7A, 0xF6, 0x82, 0x16, 0x03, 0x69};
+DeviceAddress VAT_TEMP_SENOSR = {0x28, 0xFF, 0xE3, 0x9C, 0x82, 0x16, 0x04, 0x25};
+float air_temp;
+float vat_temp;
+unsigned long last_temp_measurement = 0;
+unsigned long ERROR_INTERVAL = 300000; //5min in ms
 const float THRESH = 0.5;
 
 //short cycle timer
@@ -26,7 +26,7 @@ unsigned long RUN_THRESH = 120000; //2min in milliseconds, minimum time for heat
 //bool for short cycle
 bool can_turn_off = true;
 
-float setTemp = 20; //desired temperature, default is 20deg
+float set_temp = 20; //desired temperature, default is 20deg
 unsigned long start_time = 0; //variable for timing heating/cooling duration
 
 //states to pass to action funtion declared here
@@ -36,10 +36,10 @@ const int STATE_HEAT = 2;
 int state = STATE_IDLE; //initialise by in idle mode
 
 //Buttons for adjusting set temperature
-const int incButtonPin = 8;
-const int decButtonPin = 7;
+const int INC_BUTTON_PIN = 8;
+const int DEC_BUTTON_PIN = 7;
 unsigned long debounce_start = 0;  // the last time the output pin was toggled
-unsigned long debounceDelay = 50;  // the debounce time; increase if the output flickers
+unsigned long DEBOUNCE_DELAY = 50;  // the debounce time; increase if the output flickers
 const float TEMP_INCREMENT = 0.1;
 
 //LCD display
@@ -50,39 +50,39 @@ void setup() {
     Serial.begin(9600);
   #endif
   //set up buttons
-  pinMode(incButtonPin, INPUT_PULLUP);
-  digitalWrite(incButtonPin, HIGH);
-  pinMode(decButtonPin, INPUT_PULLUP);
-  digitalWrite(decButtonPin, HIGH);
+  pinMode(INC_BUTTON_PIN, INPUT_PULLUP);
+  digitalWrite(INC_BUTTON_PIN, HIGH);
+  pinMode(DEC_BUTTON_PIN, INPUT_PULLUP);
+  digitalWrite(DEC_BUTTON_PIN, HIGH);
   // Set up temperature probes
-  sensors.setResolution(airTempSensor, 11); //resolution of 0.125deg cels, 
-  sensors.setResolution(vatTempSensor, 11); //takes approx 375ms
+  sensors.setResolution(AIR_TEMP_SENOSR, 11); //resolution of 0.125deg cels, 
+  sensors.setResolution(VAT_TEMP_SENOSR, 11); //takes approx 375ms
   #if (DEBUG) 
     Serial.print("Vat sensor resolution: ");
-    Serial.println(sensors.getResolution(vatTempSensor), DEC);
+    Serial.println(sensors.getResolution(VAT_TEMP_SENOSR), DEC);
     Serial.print("Air sensor resolution: ");
-    Serial.println(sensors.getResolution(airTempSensor), DEC);
+    Serial.println(sensors.getResolution(AIR_TEMP_SENOSR), DEC);
   #endif
   lcd.begin(16,2);
   
 }
 
-void adjust_setTemp(){
-  if(digitalRead(incButtonPin) == LOW){
+void adjust_set_temp(){
+  if(digitalRead(INC_BUTTON_PIN) == LOW){
     if (debounce_start == 0) {
       debounce_start = millis();
     }
-    if ( (millis() - debounce_start) > debounceDelay) {
-      setTemp += TEMP_INCREMENT;
+    if ( (millis() - debounce_start) > DEBOUNCE_DELAY) {
+      set_temp += TEMP_INCREMENT;
       debounce_start = 0; //reset debounce timer
     }
   }
-  if(digitalRead(decButtonPin) == LOW){
+  if(digitalRead(DEC_BUTTON_PIN) == LOW){
     if (debounce_start == 0) {
       debounce_start = millis();
     }
-    if ( (millis() - debounce_start) > debounceDelay) {
-      setTemp -= TEMP_INCREMENT;
+    if ( (millis() - debounce_start) > DEBOUNCE_DELAY) {
+      set_temp -= TEMP_INCREMENT;
       debounce_start = 0; //reset debounce timer
     }
   }
@@ -112,10 +112,10 @@ void activate_relay(String action) {
 }
 
 void proc_idle() {
-  if (vatTemp - setTemp > THRESH) {
+  if (vat_temp - set_temp > THRESH) {
     state = STATE_COOL; //shift to checking if cooling can be switched off
     activate_relay("cool"); //activate cooling
-  } else if (setTemp - vatTemp > THRESH) {
+  } else if (set_temp - vat_temp > THRESH) {
     state = STATE_HEAT;
     activate_relay("heat");
   } else {
@@ -128,13 +128,12 @@ void proc_heat() {
   if ((millis() - start_time) > RUN_THRESH) {
     can_turn_off = true;
   }
-  if ((vatTemp > setTemp) && (can_turn_off)) { 
+  if ((vat_temp > set_temp) && (can_turn_off)) { 
     //if the temperature is within desired range
     //and minimum threshold has been met
     #if (DEBUG)
       Serial.println("...Switching heat off");
     #endif
-    //start_time = 0;
     state = STATE_IDLE;
   }
 }
@@ -143,11 +142,10 @@ void proc_cool() {
   if ((millis() - start_time) > RUN_THRESH) {
     can_turn_off = true;
   }
-  if ((vatTemp < setTemp) && (can_turn_off)) {
+  if ((vat_temp < set_temp) && (can_turn_off)) {
     #if (DEBUG)
       Serial.println("...Switching fridge off");
     #endif
-    //start_time = 0;
     state = STATE_IDLE;
   }
 }
@@ -170,29 +168,29 @@ void status_update() {
     }else {
       Serial.println("System is idle");
     }
-    lastUpdateTime = millis();
+    last_update_time = millis();
   
 }
 
 void get_temperatures() {
-  sensors.requestTemperaturesByAddress(vatTempSensor);
-  vatTemp = sensors.getTempC(vatTempSensor);
-  sensors.requestTemperaturesByAddress(airTempSensor);
-  airTemp = sensors.getTempC(airTempSensor);
-  lastTempMeasurement = millis();
+  sensors.requestTemperaturesByAddress(VAT_TEMP_SENOSR);
+  vat_temp = sensors.getTempC(VAT_TEMP_SENOSR);
+  sensors.requestTemperaturesByAddress(AIR_TEMP_SENOSR);
+  air_temp = sensors.getTempC(AIR_TEMP_SENOSR);
+  last_temp_measurement = millis();
 }
 
 void loop() {
   // Safety measure: if no temperature measurement has been recieved
   // for more than 5min, terminate process
-  if (millis() - lastTempMeasurement > error_interval) {
+  if (millis() - last_temp_measurement > ERROR_INTERVAL) {
     #if (DEBUG) 
       Serial.println("Last temp measurement was more than 5min ago...");
       Serial.println(".....Kill everything.....");
     #endif
     //place both relays low?
   }
-  adjust_setTemp();
+  adjust_set_temp();
   get_temperatures();
   //good idea to do call a safety function in loop, eg
   // 5 deg away from set point - kill everything
@@ -200,13 +198,13 @@ void loop() {
   //Display set and vat temperatures on lcd
   lcd.setCursor(0, 0);
   lcd.print("Set Temp: ");
-  lcd.print(setTemp);
+  lcd.print(set_temp);
   lcd.setCursor(0, 1);
   lcd.print("Vat Temp: ");
-  lcd.print(vatTemp);
+  lcd.print(vat_temp);
 
   #if (DEBUG)
-    if ((millis()-lastUpdateTime) > updateInterval) {
+    if ((millis()-last_update_time) > UPDATE_INTERVAL) {
       status_update();
     }
   #endif
