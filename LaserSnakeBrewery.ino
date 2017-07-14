@@ -14,9 +14,12 @@ DallasTemperature sensors(&oneWire);
  */
 DeviceAddress AIR_TEMP_SENSOR = {0x28, 0xFF, 0x7A, 0xF6, 0x82, 0x16, 0x03, 0x69};
 DeviceAddress VAT_TEMP_SENSOR = {0x28, 0xFF, 0xE3, 0x9C, 0x82, 0x16, 0x04, 0x25};
+bool air_probe_connected;
+bool vat_probe_connected;
 float air_temp;
 float vat_temp;
 unsigned long temp_request = 0;
+bool waiting_for_conversion = false;
 unsigned long REQUEST_DURATION = 1000;
 unsigned long last_temp_measurement = 0;
 const float THRESH = 0.5;
@@ -72,6 +75,7 @@ void setup() {
   // Set up temperature probes
   sensors.setResolution(AIR_TEMP_SENSOR, 11); //resolution of 0.125deg cels, 
   sensors.setResolution(VAT_TEMP_SENSOR, 11); //takes approx 375ms
+  sensors.setWaitForConversion(false);
   #if (DEBUG) 
     Serial.print("Vat sensor resolution: ");
     Serial.println(sensors.getResolution(VAT_TEMP_SENSOR), DEC);
@@ -128,6 +132,9 @@ void activate_relay(String action) {
 }
 
 void proc_idle() {
+  if (!vat_probe_connected || !air_probe_connected) {
+    state = STATE_ERROR;
+  }
   if (vat_temp - set_temp > THRESH) {
     state = STATE_COOL; 
     activate_relay("cool"); //activate cooling
@@ -140,6 +147,9 @@ void proc_idle() {
 }
 
 void proc_heat() {
+  if (!vat_probe_connected || !air_probe_connected) {
+    state = STATE_ERROR;
+  }
   if ((millis() - start_time) > RUN_THRESH) {
     can_turn_off = true;
   }
@@ -149,13 +159,12 @@ void proc_heat() {
     #endif
     state = STATE_IDLE;
   }
-  /* check if one of the probes is faulting. It waits until the fridge is 
-   *  able to be turned off until checking to avoid short cycle
-   */
-
 }
 
 void proc_cool() {
+  if (!vat_probe_connected || !air_probe_connected) {
+    state = STATE_ERROR;
+  }
   if ((millis() - start_time) > RUN_THRESH) {
     can_turn_off = true;
   }
@@ -167,7 +176,25 @@ void proc_cool() {
   }
 }
 
-// print status to Serial monitor, activated in debug mode only
+void error_handler() {
+  if (millis() - start_time > RUN_THRESH) {
+    can_turn_off = true;
+    // set both relays low here 
+  }
+  // Determine the cause of the error and display to lcd
+
+
+  // if probe comes back 
+  if (vat_probe_connected && air_probe_connected) {
+    #if (DEBUG)
+      Serial.println("Exiting STATE_ERROR");
+    #endif
+    state = STATE_IDLE;
+    lcd.clear();
+  }
+}
+
+/* print status to Serial monitor, activated in debug mode only */
 void status_update() {
     if (state == STATE_HEAT) {
       Serial.print("Heater has been on for ");
@@ -190,67 +217,52 @@ void status_update() {
     }
 }
 
-void error_handler() {
-  /* In the event of an error (one of the probes drops out) simply place both relays low and leave
-   *  in STATE_ERROR until further notice. 
-   *  Implement something like: hold both buttons down for 3sec to restart
-   */
-
-  // set both relays to low
-
-  // if probe comes back 
-  if (sensors.getResolution(VAT_TEMP_SENSOR)!=0 && sensors.getResolution(AIR_TEMP_SENSOR)!=0) {
-    #if (DEBUG)
-      Serial.println("Exiting STATE_ERROR");
-    #endif
-    state = STATE_IDLE;
-    lcd.clear();
-  }
-}
-
-void get_temperatures() {
-  //check that the probes are connected
-  if (sensors.getResolution(VAT_TEMP_SENSOR)==0 || sensors.getResolution(AIR_TEMP_SENSOR)==0) {
-    #if (DEBUG) 
-      Serial.println("ERROR DETECTED");
-    #endif
-    // test the temperature probes to determine the issue
-    // get_temperatures();
-    if (sensors.getResolution(VAT_TEMP_SENSOR)==0) {
-      lcd.setCursor(0,0);
-      lcd.clear();
-      lcd.print("Error: vat probe");
-    } 
-    if (sensors.getResolution(AIR_TEMP_SENSOR)==0) {
-      lcd.setCursor(1,1);
-      lcd.clear();
-      lcd.print("Error: air probe");
+void update_lcd() {
+  switch(state) {
+    case STATE_ERROR:
+      if (!vat_probe_connected) {
+        lcd.setCursor(0,0);
+        //lcd.clear();
+        lcd.print("Error: vat probe");
+      } 
+      if (!air_probe_connected) {
+        lcd.setCursor(0,1);
+        //lcd.clear();
+        lcd.print("Error: air probe");
+      }
+      break;
+      default:
+        lcd.setCursor(0, 0);
+        lcd.print("Set Temp: ");
+        lcd.print(set_temp);
+        lcd.setCursor(0, 1);
+        lcd.print("Vat Temp: ");
+        lcd.print(vat_temp);
+        break;
     }
-    if (can_turn_off) {
-      state = STATE_ERROR;
-    }
-  }
-  sensors.requestTemperaturesByAddress(VAT_TEMP_SENSOR);
-  vat_temp = sensors.getTempC(VAT_TEMP_SENSOR);
-  sensors.requestTemperaturesByAddress(AIR_TEMP_SENSOR);
-  air_temp = sensors.getTempC(AIR_TEMP_SENSOR);
-  last_temp_measurement = millis();
 }
 
 void loop() {
   adjust_set_temp();
-  if (millis() - last_temp_measurement > MEAS_INTERVAL) {
-    get_temperatures();
+  if (!waiting_for_conversion) {
+    air_probe_connected = sensors.requestTemperaturesByAddress(VAT_TEMP_SENSOR);
+    vat_probe_connected = sensors.requestTemperaturesByAddress(AIR_TEMP_SENSOR);
+
+    temp_request = millis();
+    last_temp_measurement = millis();
+    waiting_for_conversion = true;
+  }
+  if (millis()-temp_request>750) {
+    vat_temp = sensors.getTempC(VAT_TEMP_SENSOR);
+    air_temp = sensors.getTempC(AIR_TEMP_SENSOR);
+    waiting_for_conversion = false;
+  }
+  update_lcd();
+  //if (millis() - last_temp_measurement > MEAS_INTERVAL) {
+   // get_temperatures();
 
     //Display vat temperature on lcd
-    if (state != STATE_ERROR) {
-      lcd.setCursor(0, 0);
-      lcd.print("Set Temp: ");
-      lcd.print(set_temp);
-      lcd.setCursor(0, 1);
-      lcd.print("Vat Temp: ");
-      lcd.print(vat_temp);
-    }
+
     
     //manage states - can't cool when heating or vice versa
     switch (state) {
@@ -282,7 +294,7 @@ void loop() {
       Serial.println("1;1;1;0;0;" + vat_payload);
       Serial.println("1;2;1;0;0;" + air_payload);
     #endif
-    }
+   // }
   }
   
 
