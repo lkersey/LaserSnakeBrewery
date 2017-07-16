@@ -6,7 +6,8 @@
 #define DEBUG true
 #define PRODUCTION false
 #define ONE_WIRE_BUS 13
-#define FRIDGE_RELAY 
+#define FRIDGE_RELAY 9
+#define HEATER_RELAY 10
 
 // set up 1-wire probes
 OneWire oneWire(ONE_WIRE_BUS);
@@ -90,6 +91,10 @@ void setup() {
     Serial.print("Air sensor resolution: ");
     Serial.println(sensors.getResolution(AIR_TEMP_SENSOR), DEC);
   #endif
+
+  //initialise relays
+  pinMode(FRIDGE_RELAY, OUTPUT);
+  pinMode(HEATER_RELAY, OUTPUT);
   
   // initialise lcd
   lcd.begin(16,2);
@@ -125,29 +130,33 @@ void adjust_set_temp(){
 void perform_action(String action) {
   //start timer so don't short cycle
   start_time = millis();
-  #if (DEBUG) 
-    Serial.println("Updated start_time");
-    Serial.print("New start_time is: ");
-    Serial.println(start_time);
-  #endif
   if(action == "cool") {
     can_turn_off = false;
     #if (DEBUG)
       Serial.println("...Turning fridge on");
     #endif
-    //write fridge relay pin high here (if active high)
+    // pull fridge relay high
+    digitalWrite(FRIDGE_RELAY, HIGH);
   } else if(action == "heat") {
     can_turn_off = false;
     #if (DEBUG)
       Serial.println("...Turning heating on");
     #endif
-    //write heater relay pin high here (if active high)
+    // pull heater relay high
+    digitalWrite(HEATER_RELAY, HIGH);
   }else if (action == "relax") {
     #if (DEBUG) 
       Serial.println("...Switching elements off");
     #endif
     can_turn_off = true;
     // write relay pins low here
+    digitalWrite(HEATER_RELAY, LOW);
+  } else if (action == "disable") {
+    #if (DEBUG) 
+      Serial.println("...Switching elements off");
+    #endif
+    digitalWrite(HEATER_RELAY, LOW);
+    digitalWrite(FRIDGE_RELAY, LOW);
   }
 }
 
@@ -161,8 +170,6 @@ void proc_idle() {
   } else if (set_temp - vat_temp > THRESH) {
     state = STATE_HEAT;
     perform_action("heat");
-  } else {
-  //write digital pins low here for relays
   }
 }
 
@@ -177,10 +184,8 @@ void proc_heat() {
   }
   // check if conditions are right to turn heater off 
   if ((vat_temp > set_temp) && (can_turn_off)) { 
-    #if (DEBUG)
-      Serial.println("...Switching heat off...");
-    #endif
     state = STATE_IDLE;
+    perform_action("disable");
   }
   // check if heater has been on for too long
   if ((millis() - start_time) > MAX_RUN_TIME) {
@@ -188,7 +193,7 @@ void proc_heat() {
       Serial.println("Maximum heat time exceeded, entering STATE_RELAX");
     #endif
     state = STATE_RELAX;
-    perform_action("relax");
+    perform_action("disable");
   }
 }
 
@@ -200,17 +205,15 @@ void proc_cool() {
     can_turn_off = true;
   }
   if ((vat_temp < set_temp) && (can_turn_off)) {
-    #if (DEBUG)
-      Serial.println("...Switching fridge off...");
-    #endif
     state = STATE_IDLE;
+    perform_action("disable");
   }
 }
 
 void proc_relax() {
   if (millis() - start_time > RELAX_TIME) {
     #if (DEBUG) 
-      Serial.println("Entering STATE_IDLE");
+      Serial.println("Relax time exceeded, entering STATE_IDLE");
     #endif
     state = STATE_IDLE;
   }
@@ -219,14 +222,17 @@ void proc_relax() {
 void error_handler() {
   if (millis() - start_time > RUN_THRESH) {
     can_turn_off = true;
-    // set both relays low here 
+    perform_action("disable"); 
   }
   // if probe comes back 
   if (vat_probe_connected && air_probe_connected) {
     #if (DEBUG)
       Serial.println("Exiting STATE_ERROR");
     #endif
-    state = STATE_IDLE;
+    if (can_turn_off) {
+      state = STATE_IDLE;
+      //perform_action("disable");      
+    }
     reset_lcd();
   }
 }
