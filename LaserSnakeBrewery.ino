@@ -3,6 +3,7 @@
 #include <DallasTemperature.h>
 #include <LiquidCrystal.h>
 
+// currently either debug OR production mode, as both use the serial 
 #define DEBUG true
 #define PRODUCTION false
 #define ONE_WIRE_BUS 13
@@ -84,6 +85,12 @@ void setup() {
   // Set up temperature probes
   sensors.setResolution(AIR_TEMP_SENSOR, 11); //resolution of 0.125deg cels, 
   sensors.setResolution(VAT_TEMP_SENSOR, 11); //takes approx 375ms
+  if (sensors.getResolution(VAT_TEMP_SENSOR) != 0) {
+    vat_probe_connected = true;
+  }
+  if (sensors.getResolution(AIR_TEMP_SENSOR) != 0) {
+    air_probe_connected = true;
+  }
   sensors.setWaitForConversion(false);
   #if (DEBUG) 
     Serial.print("Vat sensor resolution: ");
@@ -144,13 +151,13 @@ void perform_action(String action) {
     #endif
     // pull heater relay high
     digitalWrite(HEATER_RELAY, HIGH);
-  }else if (action == "relax") {
-    #if (DEBUG) 
-      Serial.println("...Switching elements off");
-    #endif
-    can_turn_off = true;
-    // write relay pins low here
-    digitalWrite(HEATER_RELAY, LOW);
+//  }else if (action == "relax") {
+//    #if (DEBUG) 
+//      Serial.println("...Switching elements off");
+//    #endif
+//    can_turn_off = true;
+//    // write relay pins low here
+//    digitalWrite(HEATER_RELAY, LOW);
   } else if (action == "disable") {
     #if (DEBUG) 
       Serial.println("...Switching elements off");
@@ -226,10 +233,10 @@ void error_handler() {
   }
   // if probe comes back 
   if (vat_probe_connected && air_probe_connected) {
+    if (can_turn_off) {
     #if (DEBUG)
       Serial.println("Exiting STATE_ERROR");
     #endif
-    if (can_turn_off) {
       state = STATE_IDLE;
       //perform_action("disable");      
     }
@@ -257,6 +264,12 @@ void status_update() {
       Serial.println("System is idle");
     } else if (state == STATE_ERROR) {
       Serial.println("ERROR");
+      if (!vat_probe_connected) {
+        Serial.println("Vat probe not connected");
+      }
+      if (!air_probe_connected) {
+        Serial.println("Air probe not connected");
+      }
     }
 }
 
@@ -303,12 +316,10 @@ void update_lcd() {
 
 void loop() {
   adjust_set_temp();
-  //update_lcd();
   
   if (!waiting_for_conversion && (millis() - last_temp_request) > MEAS_INTERVAL) {
     air_probe_connected = sensors.requestTemperaturesByAddress(AIR_TEMP_SENSOR);
     vat_probe_connected = sensors.requestTemperaturesByAddress(VAT_TEMP_SENSOR);
-    //Serial.println("Entering temperaure request");
     last_temp_request = millis();
     waiting_for_conversion = true;
   }
