@@ -5,8 +5,9 @@
 
 #define DEBUG true
 #define PRODUCTION false
-
 #define ONE_WIRE_BUS 13
+
+// set up 1-wire probes
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
 /* Address of 1-wire sensors can be found by following the tutorial at 
@@ -14,23 +15,33 @@ DallasTemperature sensors(&oneWire);
  */
 DeviceAddress AIR_TEMP_SENSOR = {0x28, 0xFF, 0x7A, 0xF6, 0x82, 0x16, 0x03, 0x69};
 DeviceAddress VAT_TEMP_SENSOR = {0x28, 0xFF, 0xE3, 0x9C, 0x82, 0x16, 0x04, 0x25};
+
+//set up temp measurement variables
 bool air_probe_connected;
 bool vat_probe_connected;
 float air_temp;
 float vat_temp;
-unsigned long temp_request = 0;
+unsigned long last_temp_request = 0;
+//unsigned long last_temp_measurement = 0;
 bool waiting_for_conversion = false;
-unsigned long REQUEST_DURATION = 1000;
-unsigned long last_temp_measurement = 0;
+unsigned long CONVERSION_DELAY = 1000; //time allocated for temperature conversion
+unsigned long MEAS_INTERVAL = 1000; //take temperature measurement every 1s
+
+//set up control variables
 const float THRESH = 0.5;
-unsigned long MEAS_INTERVAL = 5000; //take temperature measurement every 10s
-//short cycle timer
 unsigned long RUN_THRESH = 120000; //2min in milliseconds, minimum time for heating/cooling elements to run
-//bool for short cycle
-bool can_turn_off = true;
-// desired temperature, default is 20 deg C
+bool can_turn_off = true; //bool for short cycle timer
+unsigned long MAX_RUN_TIME = 14400000; //4 hours - maximum time for heating element to be on
+unsigned long RELAX_TIME = 300000; //5min 
 float set_temp = 20; 
 unsigned long start_time = 0; //variable for timing heating/cooling duration
+//system states
+const int STATE_ERROR = -1;
+const int STATE_RELAX = 0;
+const int STATE_IDLE = 1;
+const int STATE_COOL = 2;
+const int STATE_HEAT = 3;
+int state = STATE_IDLE; //initialise in idle
 
 // Initialisations for myController. 
 const int VAT_ID = 1;
@@ -38,13 +49,6 @@ const int AIR_ID = 2;
 String vat_payload;
 String air_payload;
 
-//system states
-const int STATE_ERROR = -1;
-const int STATE_IDLE = 1;
-const int STATE_COOL = 2;
-const int STATE_HEAT = 3;
-//initialise in idle mode
-int state = STATE_IDLE; 
 
 //Buttons for adjusting set temperature
 const int INC_BUTTON_PIN = 8;
@@ -55,6 +59,8 @@ const float TEMP_INCREMENT = 0.1;
 
 //LCD display
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+unsigned long LCD_REFRESH = 300000; //refresh lcd every 5min
+unsigned long last_lcd_refresh = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -85,6 +91,10 @@ void setup() {
   
   // initialise lcd
   lcd.begin(16,2);
+  lcd.setCursor(0,0);
+  lcd.print("Set Temp: ");
+  lcd.setCursor(0,1);
+  lcd.print("Vat temp: ");
 }
 
 void adjust_set_temp(){
@@ -95,6 +105,7 @@ void adjust_set_temp(){
     if ( (millis() - debounce_start) > DEBOUNCE_DELAY) {
       set_temp += TEMP_INCREMENT;
       debounce_start = 0; //reset debounce timer
+      update_lcd(); 
     }
   }
   if(digitalRead(DEC_BUTTON_PIN) == LOW){
@@ -104,11 +115,12 @@ void adjust_set_temp(){
     if ( (millis() - debounce_start) > DEBOUNCE_DELAY) {
       set_temp -= TEMP_INCREMENT;
       debounce_start = 0; //reset debounce timer
+      update_lcd();
     }
   }
 }
 
-void activate_relay(String action) {
+void perform_action(String action) {
   //start timer so don't short cycle
   start_time = millis();
   #if (DEBUG) 
@@ -116,18 +128,24 @@ void activate_relay(String action) {
     Serial.print("New start_time is: ");
     Serial.println(start_time);
   #endif
-  can_turn_off = false;
   if(action == "cool") {
+    can_turn_off = false;
     #if (DEBUG)
       Serial.println("...Turning fridge on");
     #endif
     //write fridge relay pin high here (if active high)
-  }
-  if(action == "heat") {
+  } else if(action == "heat") {
+    can_turn_off = false;
     #if (DEBUG)
       Serial.println("...Turning heating on");
     #endif
     //write heater relay pin high here (if active high)
+  }else if (action == "relax") {
+    #if (DEBUG) 
+      Serial.println("...Switching elements off");
+    #endif
+    can_turn_off = true;
+    // write relay pins low here
   }
 }
 
@@ -137,27 +155,38 @@ void proc_idle() {
   }
   if (vat_temp - set_temp > THRESH) {
     state = STATE_COOL; 
-    activate_relay("cool"); //activate cooling
+    perform_action("cool"); //activate cooling
   } else if (set_temp - vat_temp > THRESH) {
     state = STATE_HEAT;
-    activate_relay("heat");
+    perform_action("heat");
   } else {
   //write digital pins low here for relays
   }
 }
 
 void proc_heat() {
+  // check if probes are connected
   if (!vat_probe_connected || !air_probe_connected) {
     state = STATE_ERROR;
   }
+  // check if minimum runtime has elapsed
   if ((millis() - start_time) > RUN_THRESH) {
     can_turn_off = true;
   }
+  // check if conditions are right to turn heater off 
   if ((vat_temp > set_temp) && (can_turn_off)) { 
     #if (DEBUG)
       Serial.println("...Switching heat off...");
     #endif
     state = STATE_IDLE;
+  }
+  // check if heater has been on for too long
+  if ((millis() - start_time) > MAX_RUN_TIME) {
+    #if (DEBUG) 
+      Serial.println("Maximum heat time exceeded, entering STATE_RELAX");
+    #endif
+    state = STATE_RELAX;
+    perform_action("relax");
   }
 }
 
@@ -171,6 +200,15 @@ void proc_cool() {
   if ((vat_temp < set_temp) && (can_turn_off)) {
     #if (DEBUG)
       Serial.println("...Switching fridge off...");
+    #endif
+    state = STATE_IDLE;
+  }
+}
+
+void proc_relax() {
+  if (millis() - start_time > RELAX_TIME) {
+    #if (DEBUG) 
+      Serial.println("Entering STATE_IDLE");
     #endif
     state = STATE_IDLE;
   }
@@ -190,7 +228,7 @@ void error_handler() {
       Serial.println("Exiting STATE_ERROR");
     #endif
     state = STATE_IDLE;
-    lcd.clear();
+    reset_lcd();
   }
 }
 
@@ -217,6 +255,15 @@ void status_update() {
     }
 }
 
+void reset_lcd() {
+  lcd.begin(16,2);
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Set Temp: ");
+  lcd.setCursor(0,1);
+  lcd.print("Vat temp: ");
+}
+
 void update_lcd() {
   switch(state) {
     case STATE_ERROR:
@@ -232,11 +279,13 @@ void update_lcd() {
       }
       break;
       default:
-        lcd.setCursor(0, 0);
-        lcd.print("Set Temp: ");
+        lcd.setCursor(10, 0);
+        lcd.print("    ");
+        lcd.setCursor(10,0);
         lcd.print(set_temp);
-        lcd.setCursor(0, 1);
-        lcd.print("Vat Temp: ");
+        lcd.setCursor(10, 1);
+        lcd.print("    ");
+        lcd.setCursor(10,1);
         lcd.print(vat_temp);
         break;
     }
@@ -244,27 +293,25 @@ void update_lcd() {
 
 void loop() {
   adjust_set_temp();
-  if (!waiting_for_conversion) {
+  
+  if (!waiting_for_conversion && millis() - last_temp_request > MEAS_INTERVAL) {
     air_probe_connected = sensors.requestTemperaturesByAddress(VAT_TEMP_SENSOR);
     vat_probe_connected = sensors.requestTemperaturesByAddress(AIR_TEMP_SENSOR);
 
-    temp_request = millis();
-    last_temp_measurement = millis();
+    last_temp_request = millis();
     waiting_for_conversion = true;
   }
-  if (millis()-temp_request>750) {
+  if (waiting_for_conversion && millis()-last_temp_request > CONVERSION_DELAY) {
     vat_temp = sensors.getTempC(VAT_TEMP_SENSOR);
     air_temp = sensors.getTempC(AIR_TEMP_SENSOR);
     waiting_for_conversion = false;
+    update_lcd();
   }
-  update_lcd();
-  //if (millis() - last_temp_measurement > MEAS_INTERVAL) {
-   // get_temperatures();
-
-    //Display vat temperature on lcd
-
-    
-    //manage states - can't cool when heating or vice versa
+  //Send an update to the Serial monitor if DEBUG mode is on
+    #if (DEBUG) 
+      status_update();
+    #endif
+    // Manage states- can't heat while cooling and vice versa
     switch (state) {
       case STATE_IDLE:
         proc_idle();
@@ -275,26 +322,23 @@ void loop() {
       case STATE_COOL:
         proc_cool();
         break;
+      case STATE_RELAX:
+        proc_relax();
+        break;
       case STATE_ERROR:
         error_handler();
         break;    
-    }
-
-    //Send an update to the lcd if DEBUG mode is on
-    #if (DEBUG) 
-      status_update();
-    #endif
-    
- /* sent data to myController. Detailed instructions can be
- *  found here: https://www.mysensors.org/download/serial_api_20
- */
-    vat_payload = vat_temp;
-    air_payload = air_temp;
+    } 
+   /* sent data to myController. Detailed instructions can be
+   *  found here: https://www.mysensors.org/download/serial_api_20
+   */
     #if (PRODUCTION)
+      vat_payload = vat_temp;
+      air_payload = air_temp;
       Serial.println("1;1;1;0;0;" + vat_payload);
       Serial.println("1;2;1;0;0;" + air_payload);
     #endif
-   // }
-  }
+    
+ }
   
 
