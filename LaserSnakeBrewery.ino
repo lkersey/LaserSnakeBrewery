@@ -6,6 +6,7 @@
 #define DEBUG true
 #define PRODUCTION false
 #define ONE_WIRE_BUS 13
+#define FRIDGE_RELAY 
 
 // set up 1-wire probes
 OneWire oneWire(ONE_WIRE_BUS);
@@ -32,6 +33,7 @@ const float THRESH = 0.5;
 unsigned long RUN_THRESH = 120000; //2min in milliseconds, minimum time for heating/cooling elements to run
 bool can_turn_off = true; //bool for short cycle timer
 unsigned long MAX_RUN_TIME = 14400000; //4 hours - maximum time for heating element to be on
+//unsigned long MAX_RUN_TIME = 2000;
 unsigned long RELAX_TIME = 300000; //5min 
 float set_temp = 20; 
 unsigned long start_time = 0; //variable for timing heating/cooling duration
@@ -59,8 +61,8 @@ const float TEMP_INCREMENT = 0.1;
 
 //LCD display
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
-unsigned long LCD_REFRESH = 300000; //refresh lcd every 5min
-unsigned long last_lcd_refresh = 0;
+//unsigned long LCD_REFRESH = 300000; //refresh lcd every 5min
+//unsigned long last_lcd_refresh = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -219,9 +221,6 @@ void error_handler() {
     can_turn_off = true;
     // set both relays low here 
   }
-  // Determine the cause of the error and display to lcd
-
-
   // if probe comes back 
   if (vat_probe_connected && air_probe_connected) {
     #if (DEBUG)
@@ -256,7 +255,6 @@ void status_update() {
 }
 
 void reset_lcd() {
-  lcd.begin(16,2);
   lcd.clear();
   lcd.setCursor(0,0);
   lcd.print("Set Temp: ");
@@ -271,11 +269,17 @@ void update_lcd() {
         lcd.setCursor(0,0);
         //lcd.clear();
         lcd.print("Error: vat probe");
-      } 
+      } else if (vat_probe_connected) {
+        lcd.setCursor(0,0);
+        lcd.print("                ");
+      }
       if (!air_probe_connected) {
         lcd.setCursor(0,1);
         //lcd.clear();
         lcd.print("Error: air probe");
+      } else if (air_probe_connected) {
+        lcd.setCursor(0,1);
+        lcd.print("                ");
       }
       break;
       default:
@@ -293,11 +297,12 @@ void update_lcd() {
 
 void loop() {
   adjust_set_temp();
+  //update_lcd();
   
-  if (!waiting_for_conversion && millis() - last_temp_request > MEAS_INTERVAL) {
-    air_probe_connected = sensors.requestTemperaturesByAddress(VAT_TEMP_SENSOR);
-    vat_probe_connected = sensors.requestTemperaturesByAddress(AIR_TEMP_SENSOR);
-
+  if (!waiting_for_conversion && (millis() - last_temp_request) > MEAS_INTERVAL) {
+    air_probe_connected = sensors.requestTemperaturesByAddress(AIR_TEMP_SENSOR);
+    vat_probe_connected = sensors.requestTemperaturesByAddress(VAT_TEMP_SENSOR);
+    //Serial.println("Entering temperaure request");
     last_temp_request = millis();
     waiting_for_conversion = true;
   }
@@ -306,11 +311,20 @@ void loop() {
     air_temp = sensors.getTempC(AIR_TEMP_SENSOR);
     waiting_for_conversion = false;
     update_lcd();
-  }
-  //Send an update to the Serial monitor if DEBUG mode is on
+   /* sent data to myController. Detailed instructions can be
+   *  found here: https://www.mysensors.org/download/serial_api_20
+   */
+    #if (PRODUCTION)
+      vat_payload = vat_temp;
+      air_payload = air_temp;
+      Serial.println("1;1;1;0;0;" + vat_payload);
+      Serial.println("1;2;1;0;0;" + air_payload);
+    #endif
+    //Send an update to the Serial monitor if DEBUG mode is on
     #if (DEBUG) 
       status_update();
     #endif
+  }
     // Manage states- can't heat while cooling and vice versa
     switch (state) {
       case STATE_IDLE:
@@ -329,16 +343,6 @@ void loop() {
         error_handler();
         break;    
     } 
-   /* sent data to myController. Detailed instructions can be
-   *  found here: https://www.mysensors.org/download/serial_api_20
-   */
-    #if (PRODUCTION)
-      vat_payload = vat_temp;
-      air_payload = air_temp;
-      Serial.println("1;1;1;0;0;" + vat_payload);
-      Serial.println("1;2;1;0;0;" + air_payload);
-    #endif
-    
  }
   
 
