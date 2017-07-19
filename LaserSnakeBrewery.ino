@@ -4,11 +4,11 @@
 #include <LiquidCrystal.h>
 
 // currently either debug OR production mode, as both use the serial 
-#define DEBUG true
-#define PRODUCTION false
-#define ONE_WIRE_BUS 13
-#define FRIDGE_RELAY 9
-#define HEATER_RELAY 10
+#define DEBUG false
+#define PRODUCTION true
+#define ONE_WIRE_BUS 6
+#define FRIDGE_RELAY 10
+#define HEATER_RELAY 9
 
 // set up 1-wire probes
 OneWire oneWire(ONE_WIRE_BUS);
@@ -85,10 +85,16 @@ void setup() {
   // Set up temperature probes
   sensors.setResolution(AIR_TEMP_SENSOR, 11); //resolution of 0.125deg cels, 
   sensors.setResolution(VAT_TEMP_SENSOR, 11); //takes approx 375ms
-  if (sensors.getResolution(VAT_TEMP_SENSOR) != 0) {
+  if (sensors.getResolution(VAT_TEMP_SENSOR) == 0) {
+    vat_probe_connected = false;
+    state = STATE_ERROR;
+  } else {
     vat_probe_connected = true;
   }
-  if (sensors.getResolution(AIR_TEMP_SENSOR) != 0) {
+  if (sensors.getResolution(AIR_TEMP_SENSOR) == 0) {
+    air_probe_connected = false;
+    state = STATE_ERROR;
+  } else {
     air_probe_connected = true;
   }
   sensors.setWaitForConversion(false);
@@ -101,7 +107,9 @@ void setup() {
 
   //initialise relays
   pinMode(FRIDGE_RELAY, OUTPUT);
+  digitalWrite(FRIDGE_RELAY, HIGH);
   pinMode(HEATER_RELAY, OUTPUT);
+  digitalWrite(HEATER_RELAY, HIGH);
   
   // initialise lcd
   lcd.begin(16,2);
@@ -143,14 +151,14 @@ void perform_action(String action) {
       Serial.println("...Turning fridge on");
     #endif
     // pull fridge relay high
-    digitalWrite(FRIDGE_RELAY, HIGH);
+    digitalWrite(FRIDGE_RELAY, LOW);
   } else if(action == "heat") {
     can_turn_off = false;
     #if (DEBUG)
       Serial.println("...Turning heating on");
     #endif
     // pull heater relay high
-    digitalWrite(HEATER_RELAY, HIGH);
+    digitalWrite(HEATER_RELAY, LOW);
 //  }else if (action == "relax") {
 //    #if (DEBUG) 
 //      Serial.println("...Switching elements off");
@@ -162,8 +170,8 @@ void perform_action(String action) {
     #if (DEBUG) 
       Serial.println("...Switching elements off");
     #endif
-    digitalWrite(HEATER_RELAY, LOW);
-    digitalWrite(FRIDGE_RELAY, LOW);
+    digitalWrite(HEATER_RELAY, HIGH);
+    digitalWrite(FRIDGE_RELAY, HIGH);
   }
 }
 
@@ -210,8 +218,8 @@ void proc_cool() {
   }
   if ((millis() - start_time) > RUN_THRESH) {
     can_turn_off = true;
-  }
-  if ((vat_temp < set_temp) && (can_turn_off)) {
+  } //fridge to turn off at set_temp + THRESH
+  if ((vat_temp < set_temp + THRESH) && (can_turn_off)) { 
     state = STATE_IDLE;
     perform_action("disable");
   }
@@ -246,6 +254,8 @@ void error_handler() {
 
 /* print status to Serial monitor, activated in debug mode only */
 void status_update() {
+  Serial.print("Vat temp:");
+  Serial.println(vat_temp);
     if (state == STATE_HEAT) {
       Serial.print("Heater has been on for ");
       Serial.print((millis()-start_time)/1000);
@@ -341,7 +351,6 @@ void loop() {
     #if (DEBUG) 
       status_update();
     #endif
-  }
     // Manage states- can't heat while cooling and vice versa
     switch (state) {
       case STATE_IDLE:
@@ -359,7 +368,9 @@ void loop() {
       case STATE_ERROR:
         error_handler();
         break;    
-    } 
- }
+    }
+  }
+}
+ 
   
 
