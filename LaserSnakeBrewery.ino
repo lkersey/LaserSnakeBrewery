@@ -10,6 +10,32 @@
 #define FRIDGE_RELAY 10
 #define HEATER_RELAY 9
 
+/*  tuning variables- tweak for more precise control
+ *  Note: negative values mean below the set temperature.
+ *  Be careful to ensure that variables do not overlap, to prevent
+ *  competitve cycling
+ */
+float set_temp = 24; 
+float heater_on_thresh = -0.3;
+float heater_off_thresh = 0;
+float fridge_on_thresh = 0.4;
+float fridge_off_thresh = 0.1;
+
+//set up non-tunable control variables
+unsigned long RUN_THRESH = 120000; //2min in milliseconds, minimum time for heating/cooling elements to run
+bool can_turn_off = true; //bool for short cycle timer
+unsigned long start_time = 0; //variable for timing heating/cooling duration
+unsigned long MAX_RUN_TIME = 14400000; //4 hours - maximum time for heating element to be on
+unsigned long RELAX_TIME = 300000; //5min 
+
+//system states
+const int STATE_ERROR = -1;
+const int STATE_RELAX = 0;
+const int STATE_IDLE = 1;
+const int STATE_COOL = 2;
+const int STATE_HEAT = 3;
+int state = STATE_IDLE; //initialise in idle
+
 // set up 1-wire probes
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
@@ -25,34 +51,15 @@ bool vat_probe_connected;
 float air_temp;
 float vat_temp;
 unsigned long last_temp_request = 0;
-//unsigned long last_temp_measurement = 0;
 bool waiting_for_conversion = false;
 unsigned long CONVERSION_DELAY = 1000; //time allocated for temperature conversion
 unsigned long MEAS_INTERVAL = 1000; //take temperature measurement every 1s
-
-//set up control variables
-const float THRESH = 0.5;
-unsigned long RUN_THRESH = 120000; //2min in milliseconds, minimum time for heating/cooling elements to run
-bool can_turn_off = true; //bool for short cycle timer
-unsigned long MAX_RUN_TIME = 14400000; //4 hours - maximum time for heating element to be on
-//unsigned long MAX_RUN_TIME = 2000;
-unsigned long RELAX_TIME = 300000; //5min 
-float set_temp = 20; 
-unsigned long start_time = 0; //variable for timing heating/cooling duration
-//system states
-const int STATE_ERROR = -1;
-const int STATE_RELAX = 0;
-const int STATE_IDLE = 1;
-const int STATE_COOL = 2;
-const int STATE_HEAT = 3;
-int state = STATE_IDLE; //initialise in idle
 
 // Initialisations for myController. 
 const int VAT_ID = 1;
 const int AIR_ID = 2;
 String vat_payload;
 String air_payload;
-
 
 //Buttons for adjusting set temperature
 const int INC_BUTTON_PIN = 8;
@@ -63,11 +70,10 @@ const float TEMP_INCREMENT = 0.1;
 
 //LCD display
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
-//unsigned long LCD_REFRESH = 300000; //refresh lcd every 5min
-//unsigned long last_lcd_refresh = 0;
 
 void setup() {
   Serial.begin(9600);
+  
   /* Present sensors to MyController. Detailed presentation instructions can be
   *  found here: https://www.mysensors.org/download/serial_api_20
   */
@@ -97,6 +103,11 @@ void setup() {
   } else {
     air_probe_connected = true;
   }
+  /* Setting the waitForConversion flag to false ensures that a tempurate request returns immediately
+   *  without waiting for a temperature conversion. If setting the flag to false, be sure to wait 
+   *  the appropriate amount of time before retrieving the measurement, to allow time for the conversion
+   *  to take place.
+   */
   sensors.setWaitForConversion(false);
   #if (DEBUG) 
     Serial.print("Vat sensor resolution: ");
@@ -150,22 +161,13 @@ void perform_action(String action) {
     #if (DEBUG)
       Serial.println("...Turning fridge on");
     #endif
-    // pull fridge relay high
     digitalWrite(FRIDGE_RELAY, LOW);
   } else if(action == "heat") {
     can_turn_off = false;
     #if (DEBUG)
       Serial.println("...Turning heating on");
     #endif
-    // pull heater relay high
     digitalWrite(HEATER_RELAY, LOW);
-//  }else if (action == "relax") {
-//    #if (DEBUG) 
-//      Serial.println("...Switching elements off");
-//    #endif
-//    can_turn_off = true;
-//    // write relay pins low here
-//    digitalWrite(HEATER_RELAY, LOW);
   } else if (action == "disable") {
     #if (DEBUG) 
       Serial.println("...Switching elements off");
@@ -179,10 +181,12 @@ void proc_idle() {
   if (!vat_probe_connected || !air_probe_connected) {
     state = STATE_ERROR;
   }
-  if (vat_temp - set_temp > THRESH) {
+  //if (vat_temp - set_temp > THRESH) {
+  if (vat_temp - set_temp > fridge_on_thresh) {
     state = STATE_COOL; 
     perform_action("cool"); //activate cooling
-  } else if (set_temp - vat_temp > THRESH) {
+  //} else if (set_temp - vat_temp > THRESH) {
+  }else if (vat_temp - set_temp < heater_on_thresh) {
     state = STATE_HEAT;
     perform_action("heat");
   }
@@ -198,7 +202,8 @@ void proc_heat() {
     can_turn_off = true;
   }
   // check if conditions are right to turn heater off 
-  if ((vat_temp > set_temp) && (can_turn_off)) { 
+  //if ((vat_temp > set_temp) && (can_turn_off)) {
+  if ((vat_temp - set_temp > heater_off_thresh) && can_turn_off) {
     state = STATE_IDLE;
     perform_action("disable");
   }
@@ -219,7 +224,8 @@ void proc_cool() {
   if ((millis() - start_time) > RUN_THRESH) {
     can_turn_off = true;
   } //fridge to turn off at set_temp + THRESH
-  if ((vat_temp < set_temp + THRESH) && (can_turn_off)) { 
+  //if ((vat_temp < set_temp + THRESH) && (can_turn_off)) { 
+  if ((vat_temp - set_temp < fridge_off_thresh) && can_turn_off) {
     state = STATE_IDLE;
     perform_action("disable");
   }
