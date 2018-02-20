@@ -1,9 +1,8 @@
 #include <SPI.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#include <LiquidCrystal.h>
 
-// currently either debug OR production mode, as both use the serial 
+// either debug OR production mode, as both use the serial 
 #define DEBUG false
 #define PRODUCTION true
 #define ONE_WIRE_BUS 6
@@ -61,15 +60,6 @@ const int AIR_ID = 2;
 String vat_payload;
 String air_payload;
 
-//Buttons for adjusting set temperature
-const int INC_BUTTON_PIN = 8;
-const int DEC_BUTTON_PIN = 7;
-unsigned long debounce_start = 0;  // the last time the output pin was toggled
-unsigned long DEBOUNCE_DELAY = 100;  // the debounce time; increase if the output flickers
-const float TEMP_INCREMENT = 0.1;
-
-//LCD display
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
 
 void setup() {
   Serial.begin(9600);
@@ -81,12 +71,6 @@ void setup() {
     Serial.println("1;1;0;0;6");
     Serial.println("1;2;0;0;6");
   #endif
-  
-  //set up buttons
-  pinMode(INC_BUTTON_PIN, INPUT_PULLUP);
-  digitalWrite(INC_BUTTON_PIN, HIGH);
-  pinMode(DEC_BUTTON_PIN, INPUT_PULLUP);
-  digitalWrite(DEC_BUTTON_PIN, HIGH);
   
   // Set up temperature probes
   sensors.setResolution(AIR_TEMP_SENSOR, 11); //resolution of 0.125deg cels, 
@@ -121,36 +105,6 @@ void setup() {
   digitalWrite(FRIDGE_RELAY, HIGH);
   pinMode(HEATER_RELAY, OUTPUT);
   digitalWrite(HEATER_RELAY, HIGH);
-  
-  // initialise lcd
-  lcd.begin(16,2);
-  lcd.setCursor(0,0);
-  lcd.print("Set Temp: ");
-  lcd.setCursor(0,1);
-  lcd.print("Vat temp: ");
-}
-
-void adjust_set_temp(){
-  if(digitalRead(INC_BUTTON_PIN) == LOW){
-    if (debounce_start == 0) {
-      debounce_start = millis();
-    }
-    if ( (millis() - debounce_start) > DEBOUNCE_DELAY) {
-      set_temp += TEMP_INCREMENT;
-      debounce_start = 0; //reset debounce timer
-      update_lcd(); 
-    }
-  }
-  if(digitalRead(DEC_BUTTON_PIN) == LOW){
-    if (debounce_start == 0) {
-      debounce_start = millis();
-    }
-    if ( (millis() - debounce_start) > DEBOUNCE_DELAY) {
-      set_temp -= TEMP_INCREMENT;
-      debounce_start = 0; //reset debounce timer
-      update_lcd();
-    }
-  }
 }
 
 void perform_action(String action) {
@@ -181,11 +135,9 @@ void proc_idle() {
   if (!vat_probe_connected || !air_probe_connected) {
     state = STATE_ERROR;
   }
-  //if (vat_temp - set_temp > THRESH) {
   if (vat_temp - set_temp > fridge_on_thresh) {
     state = STATE_COOL; 
     perform_action("cool"); //activate cooling
-  //} else if (set_temp - vat_temp > THRESH) {
   }else if (vat_temp - set_temp < heater_on_thresh) {
     state = STATE_HEAT;
     perform_action("heat");
@@ -202,7 +154,6 @@ void proc_heat() {
     can_turn_off = true;
   }
   // check if conditions are right to turn heater off 
-  //if ((vat_temp > set_temp) && (can_turn_off)) {
   if ((vat_temp - set_temp > heater_off_thresh) && can_turn_off) {
     state = STATE_IDLE;
     perform_action("disable");
@@ -224,7 +175,6 @@ void proc_cool() {
   if ((millis() - start_time) > RUN_THRESH) {
     can_turn_off = true;
   } //fridge to turn off at set_temp + THRESH
-  //if ((vat_temp < set_temp + THRESH) && (can_turn_off)) { 
   if ((vat_temp - set_temp < fridge_off_thresh) && can_turn_off) {
     state = STATE_IDLE;
     perform_action("disable");
@@ -254,7 +204,6 @@ void error_handler() {
       state = STATE_IDLE;
       //perform_action("disable");      
     }
-    reset_lcd();
   }
 }
 
@@ -289,50 +238,7 @@ void status_update() {
     }
 }
 
-void reset_lcd() {
-  lcd.clear();
-  lcd.setCursor(0,0);
-  lcd.print("Set Temp: ");
-  lcd.setCursor(0,1);
-  lcd.print("Vat temp: ");
-}
-
-void update_lcd() {
-  switch(state) {
-    case STATE_ERROR:
-      if (!vat_probe_connected) {
-        lcd.setCursor(0,0);
-        //lcd.clear();
-        lcd.print("Error: vat probe");
-      } else if (vat_probe_connected) {
-        lcd.setCursor(0,0);
-        lcd.print("                ");
-      }
-      if (!air_probe_connected) {
-        lcd.setCursor(0,1);
-        //lcd.clear();
-        lcd.print("Error: air probe");
-      } else if (air_probe_connected) {
-        lcd.setCursor(0,1);
-        lcd.print("                ");
-      }
-      break;
-      default:
-        lcd.setCursor(10, 0);
-        lcd.print("    ");
-        lcd.setCursor(10,0);
-        lcd.print(set_temp);
-        lcd.setCursor(10, 1);
-        lcd.print("    ");
-        lcd.setCursor(10,1);
-        lcd.print(vat_temp);
-        break;
-    }
-}
-
 void loop() {
-  adjust_set_temp();
-  
   if (!waiting_for_conversion && (millis() - last_temp_request) > MEAS_INTERVAL) {
     air_probe_connected = sensors.requestTemperaturesByAddress(AIR_TEMP_SENSOR);
     vat_probe_connected = sensors.requestTemperaturesByAddress(VAT_TEMP_SENSOR);
@@ -343,7 +249,7 @@ void loop() {
     vat_temp = sensors.getTempC(VAT_TEMP_SENSOR);
     air_temp = sensors.getTempC(AIR_TEMP_SENSOR);
     waiting_for_conversion = false;
-    update_lcd();
+    
    /* sent data to myController. Detailed instructions can be
    *  found here: https://www.mysensors.org/download/serial_api_20
    */
@@ -353,10 +259,12 @@ void loop() {
       Serial.println("1;1;1;0;0;" + vat_payload);
       Serial.println("1;2;1;0;0;" + air_payload);
     #endif
+    
     //Send an update to the Serial monitor if DEBUG mode is on
     #if (DEBUG) 
       status_update();
     #endif
+    
     // Manage states- can't heat while cooling and vice versa
     switch (state) {
       case STATE_IDLE:
