@@ -3,8 +3,8 @@
 #include <DallasTemperature.h>
 
 // either debug OR production mode, as both use the serial 
-#define DEBUG false
-#define PRODUCTION true
+#define DEBUG true
+#define PRODUCTION false
 #define ONE_WIRE_BUS 6
 #define FRIDGE_RELAY 10
 #define HEATER_RELAY 9
@@ -41,8 +41,10 @@ DallasTemperature sensors(&oneWire);
 /* Address of 1-wire sensors can be found by following the tutorial at 
  * http://henrysch.capnfatz.com/henrys-bench/arduino-temperature-measurements/ds18b20-arduino-user-manual-introduction-and-contents/ds18b20-user-manual-part-2-getting-the-device-address/
  */
-DeviceAddress AIR_TEMP_SENSOR = {0x28, 0xFF, 0x7A, 0xF6, 0x82, 0x16, 0x03, 0x69};
-DeviceAddress VAT_TEMP_SENSOR = {0x28, 0xFF, 0xE3, 0x9C, 0x82, 0x16, 0x04, 0x25};
+//DeviceAddress AIR_TEMP_SENSOR = {0x28, 0xFF, 0x7A, 0xF6, 0x82, 0x16, 0x03, 0x69};
+//DeviceAddress VAT_TEMP_SENSOR = {0x28, 0xFF, 0xE3, 0x9C, 0x82, 0x16, 0x04, 0x25};
+DeviceAddress AIR_TEMP_SENSOR = {0x28, 0xFF, 0x16, 0x8D, 0x87, 0x16, 0x03, 0x50}; //Test sensor A
+DeviceAddress VAT_TEMP_SENSOR = {0x28, 0xFF, 0x0A, 0x2E, 0x68, 0x14, 0x04, 0xA6}; //Test sensor B
 
 //set up temp measurement variables
 bool air_probe_connected;
@@ -210,7 +212,10 @@ void error_handler() {
 /* print status to Serial monitor, activated in debug mode only */
 void status_update() {
   Serial.print("Vat temp:");
-  Serial.println(vat_temp);
+  Serial.print(vat_temp);
+  Serial.print("\t");
+  Serial.print("Air temp:");
+  Serial.println(air_temp);
     if (state == STATE_HEAT) {
       Serial.print("Heater has been on for ");
       Serial.print((millis()-start_time)/1000);
