@@ -1,8 +1,20 @@
-import React from 'react';
+import React, { Component } from 'react';
 import './HelloWorld.css'
 
-const HelloWorld = props => {
-  return (<div className="HelloWorld">Hello {props.name}!</div>);
+class HelloWorld extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = { greeting: 'Hello' };
+  }
+
+  render() {
+    return (
+      <div className="HelloWorld">
+      {this.state.greeting} {this.props.name}!
+      </div>
+    );
+  }
 }
 
 export default HelloWorld;
