@@ -22,20 +22,23 @@ def setup_db(db_file):
     )
     conn.commit()
 
-
-def get_vat_temperatures():
+def get_status():
     conn, c = get_db(db)
     try:
         c.execute('''SELECT * FROM fermentation_log''')
         ret = np.asarray(c.fetchall())
     except:
-        print 'Problem retrieving vat temperatures'
+        print 'Problem retrieving status'
         pass
 
-    temps = list(ret[:, 1])
     times = list(ret[:, 0])
+    vat_temps = list(ret[:, 1])
+    fridge_temps = list(ret[:, 2])
+    set_temps = list(ret[:, 3])
+    states = list(ret[:, 4])
 
-    return {'vat_temp':temps, 'timestamps':times}
+    return {'timestamps':times, 'vat_temps':vat_temps,
+    'fridge_temps':fridge_temps, 'set_temps':set_temps, 'states':states}
 
 
 def write_status(timestamp, vat_temp, fridge_temp, set_temp, phase):
@@ -48,4 +51,3 @@ def write_status(timestamp, vat_temp, fridge_temp, set_temp, phase):
         print 'Problem inserting data into' + str(db)
 
 setup_db(db)
-
