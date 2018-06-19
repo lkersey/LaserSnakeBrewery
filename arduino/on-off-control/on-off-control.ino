@@ -3,8 +3,8 @@
 #include <DallasTemperature.h>
 
 // either debug OR production mode, as both use the serial 
-#define DEBUG true
-#define PRODUCTION false
+#define DEBUG false
+#define PRODUCTION true
 #define ONE_WIRE_BUS 6
 #define FRIDGE_RELAY 10
 #define HEATER_RELAY 9
@@ -56,23 +56,15 @@ bool waiting_for_conversion = false;
 unsigned long CONVERSION_DELAY = 1000; //time allocated for temperature conversion
 unsigned long MEAS_INTERVAL = 1000; //take temperature measurement every 1s
 
-// Initialisations for myController. 
+// Initialisations  
 const int VAT_ID = 1;
 const int AIR_ID = 2;
-String vat_payload;
-String air_payload;
+//String vat_payload;
+//String air_payload;
 
 
 void setup() {
   Serial.begin(9600);
-  
-  /* Present sensors to MyController. Detailed presentation instructions can be
-  *  found here: https://www.mysensors.org/download/serial_api_20
-  */
-  #if (PRODUCTION)
-    Serial.println("1;1;0;0;6");
-    Serial.println("1;2;0;0;6");
-  #endif
   
   // Set up temperature probes
   sensors.setResolution(AIR_TEMP_SENSOR, 11); //resolution of 0.125deg cels, 
@@ -255,14 +247,19 @@ void loop() {
     air_temp = sensors.getTempC(AIR_TEMP_SENSOR);
     waiting_for_conversion = false;
     
-   /* sent data to myController. Detailed instructions can be
-   *  found here: https://www.mysensors.org/download/serial_api_20
+   /* sent data to serial for collection from python script. 
    */
     #if (PRODUCTION)
-      vat_payload = vat_temp;
-      air_payload = air_temp;
-      Serial.println("1;1;1;0;0;" + vat_payload);
-      Serial.println("1;2;1;0;0;" + air_payload);
+      //vat_payload = vat_temp;
+      //air_payload = air_temp;
+      Serial.print("temperature_status;");
+      Serial.print(vat_temp);
+      Serial.print(";");
+      Serial.print(air_temp);
+      Serial.print(";");
+      Serial.print(set_temp);
+      Serial.print(";");
+      Serial.println(state);
     #endif
     
     //Send an update to the Serial monitor if DEBUG mode is on

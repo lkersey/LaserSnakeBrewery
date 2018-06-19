@@ -18,7 +18,7 @@ def setup_db(db_file):
      vat_temp NUMBER NOT NULL,
      fridge_temp NUMBER NOT NULL,
      set_temp NUMBER NOT NULL,
-     phase VARCHAR(10) NOT NULL)'''
+     phase NUMBER NOT NULL)'''
     )
     conn.commit()
 
@@ -32,31 +32,20 @@ def get_vat_temperatures():
         print 'Problem retrieving vat temperatures'
         pass
 
-    temps = list(ret[:, 0])
-    times = list(ret[:, 1])
+    temps = list(ret[:, 1])
+    times = list(ret[:, 0])
 
     return {'vat_temp':temps, 'timestamps':times}
 
 
 def write_status(timestamp, vat_temp, fridge_temp, set_temp, phase):
-    conn, c = get_db(db)
-    c.execute('''INSERT INTO fermentation_log VALUES (?,?,?,?,?)''',
-                (timestamp, vat_temp, fridge_temp, set_temp, phase))
-    conn.commit()
-
-
-def test_insert():
-    conn, c = get_db(db)
     try:
-        timestamp = time.time()
-        c.execute('''INSERT INTO fermentation_log VALUES(?,
-        19, 19, 20, "HEAT")''', (timestamp,))
+        conn, c = get_db(db)
+        c.execute('''INSERT INTO fermentation_log VALUES (?,?,?,?,?)''',
+                (timestamp, vat_temp, fridge_temp, set_temp, phase))
         conn.commit()
     except:
-        'Problem entering temperatures'
-
+        print 'Problem inserting data into' + str(db)
 
 setup_db(db)
 
-write_status(time.time(), 19, 19, 20, 'HEAT')
-print get_vat_temperatures()
