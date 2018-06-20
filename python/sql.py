@@ -51,3 +51,5 @@ def write_status(timestamp, vat_temp, fridge_temp, set_temp, phase):
         print 'Problem inserting data into' + str(db)
 
 setup_db(db)
+#write_status(time.time(), 12.34, 11.18, 25.00, 1)
+#write_status(time.time(), 12.33, 11.20, 25.00, 1)

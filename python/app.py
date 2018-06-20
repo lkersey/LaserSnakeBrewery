@@ -5,6 +5,10 @@ import sql
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
+@app.route("/", methods=['GET',])
+def hello():
+    return jsonify("Hello World!"), 200
+
 @app.route("/status", methods=['GET',])
 def status():
     return jsonify(sql.get_status()), 200
