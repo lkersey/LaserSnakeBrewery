@@ -1,11 +1,11 @@
 import React, { Component } from 'react';
-import StatusList from './StatusList'
+import Chart from './Chart'
 import './App.css'
 
 const App = () => {
   return (
     <div className="App">
-    <StatusList />
+    <Chart />
     </div>
   );
 };
