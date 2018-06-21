@@ -31,14 +31,25 @@ def get_status():
         print 'Problem retrieving status'
         pass
 
-    times = list(ret[:, 0])
-    vat_temps = list(ret[:, 1])
-    fridge_temps = list(ret[:, 2])
-    set_temps = list(ret[:, 3])
-    states = list(ret[:, 4])
+    result = []
+    for r in ret:
+        timestamp = r[0]
+        vat_temp = r[1]
+        fridge_temp = r[2]
+        set_temp = r[3]
+        phase = r[4]
+        result.append({'timestamp':timestamp, 'vat_temp':vat_temp,
+            'fridge_temp':fridge_temp, 'set_temp':set_temp, 'phase':phase})
 
-    return {'timestamps':times, 'vat_temps':vat_temps,
-    'fridge_temps':fridge_temps, 'set_temps':set_temps, 'states':states}
+    #times = list(ret[:, 0])
+    #vat_temps = list(ret[:, 1])
+    #fridge_temps = list(ret[:, 2])
+    #set_temps = list(ret[:, 3])
+    #states = list(ret[:, 4])
+
+    #return {'timestamps':times, 'vat_temps':vat_temps,
+    #'fridge_temps':fridge_temps, 'set_temps':set_temps, 'states':states}
+    return result
 
 
 def write_status(timestamp, vat_temp, fridge_temp, set_temp, phase):
