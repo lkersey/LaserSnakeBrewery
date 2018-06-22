@@ -12,17 +12,28 @@ class Chart extends Component {
     }
   }
 
-  componentDidMount() {
+  getData() {
+    const options = {
+      year: 'numeric', month: 'numeric', day: 'numeric',
+      hour: 'numeric', minute: 'numeric',
+      hour12: false,
+      timeZone: 'America/Los_Angeles'
+    };
     axios.get('http://localhost:5000/status')
     .then(res => {
       const data = res.data;
       this.setState({ inputData:data });
 
       const vatTemp = this.state.inputData.map(d =>
-        ({x: d.timestamp, y: d.vat_temp})
+        ({x: new Intl.DateTimeFormat('en-US', options).format(d.timestamp), y: d.vat_temp})
       );
       this.setState({ vatTempData:vatTemp });
     })
+  }
+
+  componentDidMount() {
+    this.getData()
+    this.interval = setInterval(() => this.getData(), 1000);
   }
 
   render() {
