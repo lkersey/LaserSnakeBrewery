@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import axios from 'axios';
+import moment from 'moment'
 import {VictoryChart, VictoryTheme, VictoryLine} from 'victory';
 import './Chart.css'
 
@@ -15,7 +16,7 @@ class Chart extends Component {
   getData() {
     const options = {
       year: 'numeric', month: 'numeric', day: 'numeric',
-      hour: 'numeric', minute: 'numeric',
+      hour: 'numeric', minute: 'numeric', second: 'numeric',
       hour12: false,
       timeZone: 'America/Los_Angeles'
     };
@@ -25,7 +26,9 @@ class Chart extends Component {
       this.setState({ inputData:data });
 
       const vatTemp = this.state.inputData.map(d =>
-        ({x: new Intl.DateTimeFormat('en-US', options).format(d.timestamp), y: d.vat_temp})
+        //({x: new Intl.DateTimeFormat('en-US', options).format(d.timestamp * 1000),
+        ({x: moment(d.timestamp * 1000).format('dddd DD MMMM YYYY, H:mm:ss a'),
+        y: d.vat_temp})
       );
       this.setState({ vatTempData:vatTemp });
     })
