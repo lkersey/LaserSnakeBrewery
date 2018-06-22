@@ -14,12 +14,6 @@ class Chart extends Component {
   }
 
   getData() {
-    const options = {
-      year: 'numeric', month: 'numeric', day: 'numeric',
-      hour: 'numeric', minute: 'numeric', second: 'numeric',
-      hour12: false,
-      timeZone: 'America/Los_Angeles'
-    };
     axios.get('http://localhost:5000/status')
     .then(res => {
       const data = res.data;
@@ -46,7 +40,7 @@ class Chart extends Component {
         <VictoryChart theme={VictoryTheme.material}>
           <VictoryLine style={{
             data: { stroke: "c43a31"},
-            parent: { border: "1px solid #ccc"}
+            parent: { border: "1px solid #ccc"},
           }}
           data = {this.state.vatTempData}
           />
