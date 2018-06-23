@@ -38,7 +38,7 @@ class Chart extends Component {
       {this.state.vatTempData.length}
         <VictoryChart theme={ VictoryTheme.material }
         style= {{
-          parent: { maxWidth: "70%"}
+          parent: { maxWidth: "60%"}
         }}
         padding= {{
           bottom: 100, left: 100, right: 50, top: 50
