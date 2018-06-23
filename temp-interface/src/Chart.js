@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import moment from 'moment'
-import {VictoryChart, VictoryTheme, VictoryLine, VictoryAxis} from 'victory';
+import {VictoryChart, VictoryTheme, VictoryLine, VictoryAxis, VictoryArea} from 'victory';
 import './Chart.css'
 
 class Chart extends Component {
@@ -44,27 +44,26 @@ class Chart extends Component {
           bottom: 100, left: 100, right: 50, top: 50
         }}>
 
+        <VictoryAxis
+        tickCount={10}
+        style={{
+          tickLabels: {
+            padding: 20, angle: -45, fontSize: '8px'
+          }
+        }} />
+
+        <VictoryAxis dependentAxis
+        style={{
+          tickLabels: {
+            fontSize: '8px'
+          }
+        }} />
+
           <VictoryLine style={{
-            data: { stroke: "c43a31" },
-            parent: { border: "1px solid #ccc" }
+            data: { stroke: "c43a71" },
           }}
           data = {this.state.vatTempData}
           />
-
-          <VictoryAxis
-          style={{
-            tickLabels: {
-              padding: 20, angle: -45, fontSize: '8px'
-            }
-          }} />
-
-          <VictoryAxis dependentAxis
-          style={{
-            tickLabels: {
-              fontSize: '8px'
-            }
-          }} />
-
         </VictoryChart>
       </div>
     )
