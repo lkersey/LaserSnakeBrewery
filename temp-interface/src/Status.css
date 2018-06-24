@@ -5,42 +5,33 @@
 
 .wrapper {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   grid-gap: 10px;
   padding: 10px;
 }
 
-.box1 {
-  background-color: #e2c454;
-  color: #f5f5f5;
+.box{
   border-radius: 5px;
   padding: 20px;
+  color: #f8f3f0;
+}
+
+.box1{
+  background-color: #e2c454;
 }
 
 .box2 {
   background-color: #d3a629;
-  color: #f5f5f5;
-  border-radius: 5px;
-  padding: 20px;
 }
 
 .box3 {
   background-color: #b57400;
-  color: #f5f5f5;
-  border-radius: 5px;
-  padding: 20px;
 }
 
 .box4 {
   background-color: #964100;
-  color: #f5f5f5;
-  border-radius: 5px;
-  padding: 20px;
 }
 
 .box5 {
   background-color: #612910;
-  color: #f5f5f5;
-  border-radius: 5px;
-  padding: 20px;
 }
