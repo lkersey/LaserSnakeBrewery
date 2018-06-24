@@ -9,6 +9,10 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 def hello():
     return jsonify("Hello World!"), 200
 
+@app.route("/history", methods=['GET',])
+def history():
+    return jsonify(sql.get_history()), 200
+
 @app.route("/status", methods=['GET',])
 def status():
     return jsonify(sql.get_status()), 200

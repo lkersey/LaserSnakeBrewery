@@ -22,7 +22,7 @@ def setup_db(db_file):
     )
     conn.commit()
 
-def get_status():
+def get_history():
     conn, c = get_db(db)
     try:
         c.execute('''SELECT * FROM fermentation_log''')
@@ -41,6 +41,30 @@ def get_status():
         result.append({'timestamp':timestamp, 'vat_temp':vat_temp,
             'fridge_temp':fridge_temp, 'set_temp':set_temp, 'phase':phase})
     return result
+
+def get_status():
+    """
+    Returns the most recently added entry in the database.
+    """
+    conn, c = get_db(db)
+    try:
+        c.execute('''SELECT * FROM fermentation_log ORDER BY timestmp DESC limit 1''')
+        ret = np.asarray(c.fetchall())
+    except:
+        print 'Problem retrieving status'
+        pass
+
+    result = []
+    for r in ret:
+        timestamp = r[0]
+        vat_temp = r[1]
+        fridge_temp = r[2]
+        set_temp = r[3]
+        phase = r[4]
+        result.append({'timestamp':timestamp, 'vat_temp':vat_temp,
+            'fridge_temp':fridge_temp, 'set_temp':set_temp, 'phase':phase})
+    return result
+
 
 
 def write_status(timestamp, vat_temp, fridge_temp, set_temp, phase):
