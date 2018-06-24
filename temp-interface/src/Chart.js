@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import axios from 'axios';
 import moment from 'moment'
-import {VictoryChart, VictoryTheme, VictoryLine, VictoryAxis, VictoryArea} from 'victory';
+import {VictoryChart, VictoryTheme, VictoryLine, VictoryAxis, VictoryArea,
+VictoryTooltip, VictoryVoronoiContainer} from 'victory';
 import './Chart.css'
 
 class Chart extends Component {
@@ -9,7 +10,8 @@ class Chart extends Component {
     super(props);
     this.state = {
       inputData:[],
-      vatTempData:[]
+      vatTempData:[],
+      fridgeTempData:[]
     }
   }
 
@@ -23,13 +25,18 @@ class Chart extends Component {
         ({x: moment(d.timestamp * 1000).format('H:mm:ss a'),
         y: d.vat_temp})
       );
+      const fridgeTemp = this.state.inputData.map(d =>
+        ({x: moment(d.timestamp * 1000).format('H:mm:ss a'),
+        y: d.fridge_temp})
+      );
       this.setState({ vatTempData:vatTemp });
+      this.setState({ fridgeTempData:fridgeTemp});
     })
   }
 
   componentDidMount() {
     this.getData()
-    this.interval = setInterval(() => this.getData(), 1000);
+    this.interval = setInterval(() => this.getData(), 1000 * 60);
   }
 
   render() {
@@ -42,7 +49,9 @@ class Chart extends Component {
         }}
         padding= {{
           bottom: 100, left: 100, right: 50, top: 50
-        }}>
+        }}
+        containerComponent={<VictoryVoronoiContainer/>}
+        >
 
         <VictoryAxis
         tickCount={10}
@@ -59,11 +68,24 @@ class Chart extends Component {
           }
         }} />
 
-          <VictoryLine style={{
-            data: { stroke: "c43a71" },
-          }}
-          data = {this.state.vatTempData}
+          <VictoryLine
+            style={{
+              data: { stroke: "c43a71" },
+            }}
+            labels={(d) => `${d.y}\u2103` }
+            labelComponent={<VictoryTooltip/>}
+            data = {this.state.vatTempData}
           />
+
+          <VictoryLine
+            style={{
+              data: { stroke: "aaaaaa" },
+            }}
+            labels={(d) => `${d.y}\u2103` }
+            labelComponent={<VictoryTooltip/>}
+            data = {this.state.fridgeTempData}
+          />
+
         </VictoryChart>
       </div>
     )
