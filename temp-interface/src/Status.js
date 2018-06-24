@@ -52,11 +52,11 @@ class Status extends Component {
     return (
       <div className='Status'>
         <div className='wrapper'>
-          <div className="box"><Timestamp timestamp={this.state.timestamp}/></div>
-          <div className="box">Set temp: { this.state.setTemp }</div>
-          <div className="box">Fridge temp: { this.state.fridgeTemp }</div>
-          <div className="box">Vat temp: { this.state.vatTemp }</div>
-          <div className="box">State: { this.state.phase }</div>
+          <div className="box1"><Timestamp timestamp={this.state.timestamp}/></div>
+          <div className="box2">Set temp: { this.state.setTemp }</div>
+          <div className="box3">Fridge temp: { this.state.fridgeTemp }</div>
+          <div className="box4">Vat temp: { this.state.vatTemp }</div>
+          <div className="box5">State: { this.state.phase }</div>
         </div>
       </div>
     )

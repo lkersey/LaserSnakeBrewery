@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import axios from 'axios';
 import moment from 'moment'
 import {VictoryChart, VictoryTheme, VictoryLine, VictoryAxis, VictoryArea,
-VictoryTooltip, VictoryVoronoiContainer} from 'victory';
+VictoryTooltip, VictoryVoronoiContainer, VictoryLegend} from 'victory';
 import './Chart.css'
 
 class Chart extends Component {
@@ -63,8 +63,8 @@ class Chart extends Component {
   render() {
     const padding = this.getPaddingValue()
     return (
-      <div className='Chart'>
-        <VictoryChart
+      <div>
+        <VictoryChart className='Chart'
           theme={ VictoryTheme.material }
           width= {this.state.chartWidth}
           height= {this.state.chartHeight / 2}
@@ -99,21 +99,38 @@ class Chart extends Component {
 
           <VictoryLine
             style={{
-              data: { stroke: " e67e22 " },
+              data: {
+                stroke: "b57400 ",
+                strokeWidth: 4
+              },
+            }}
+            labels={(d) => `${d.y}\u2103` }
+            labelComponent={<VictoryTooltip/>}
+            data = {this.state.fridgeTempData}
+          />
+
+          <VictoryLine
+            style={{
+              data: {
+                stroke: " 964100 ",
+                strokeWidth: 4
+             },
             }}
             labels={ (d) => `${d.y}\u2103` }
             labelComponent={ <VictoryTooltip/> }
             data = { this.state.vatTempData }
           />
 
-          <VictoryLine
-            style={{
-              data: { stroke: " 34495e " },
-            }}
-            labels={(d) => `${d.y}\u2103` }
-            labelComponent={<VictoryTooltip/>}
-            data = {this.state.fridgeTempData}
-          />
+          <VictoryLegend x={125} y={50}
+            orientation="vertical"
+    gutter={20}
+    style={{ border: { stroke: "black" }, title: {fontSize: 20 } }}
+    data={[
+      { name: "One", symbol: { fill: "tomato", type: "star" } },
+      { name: "Two", symbol: { fill: "orange" } },
+      { name: "Three", symbol: { fill: "gold" } }
+    ]}
+  />
 
         </VictoryChart>
       </div>
