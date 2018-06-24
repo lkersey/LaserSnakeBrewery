@@ -41,6 +41,19 @@ class Chart extends Component {
     this.interval = setInterval(() => this.getData(), 1000 * 60 );
     this.setState({ chartWidth: window.innerWidth });
     this.setState({ chartHeight: window.innerHeight });
+
+    window.addEventListener('resize', this.updateDimensions.bind(this));
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('resize', this.updateDimensions.bind(this));
+}
+
+  updateDimensions(event) {
+    this.setState({
+      chartWidth: event.target.innerWidth,
+      chartHeight: event.target.innerHeight
+    })
   }
 
   getPaddingValue() {
