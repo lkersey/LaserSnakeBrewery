@@ -64,49 +64,51 @@ class Chart extends Component {
     const padding = this.getPaddingValue()
     return (
       <div>
-        <VictoryChart theme={ VictoryTheme.material }
-        width= {this.state.chartWidth}
-        height= {this.state.chartHeight / 2}
-
-        style= {{
-          parent: {}
-        }}
-        padding= {{
-          bottom: padding,
-          left: padding,
-          right: padding,
-          top: padding
-        }}
-        containerComponent={<VictoryVoronoiContainer/>}
+        <VictoryChart
+          theme={ VictoryTheme.material }
+          width= {this.state.chartWidth}
+          height= {this.state.chartHeight / 2}
+          style= {{
+            parent: {}
+          }}
+          padding= {{
+            bottom: padding,
+            left: padding,
+            right: padding,
+            top: padding
+          }}
+          containerComponent={<VictoryVoronoiContainer/>}
         >
 
-        <VictoryAxis
-        tickCount={10}
-        style={{
-          tickLabels: {
-            padding: 30, angle: -45, fontSize: '14px'
-          }
-        }} />
-
-        <VictoryAxis dependentAxis
-        style={{
-          tickLabels: {
-            fontSize: '14px'
-          }
-        }} />
-
-          <VictoryLine
+          <VictoryAxis
+            tickCount={10}
             style={{
-              data: { stroke: "c43a71" },
+              tickLabels: {
+                padding: 30, angle: -45, fontSize: '14px'
+              }
             }}
-            labels={(d) => `${d.y}\u2103` }
-            labelComponent={<VictoryTooltip/>}
-            data = {this.state.vatTempData}
+          />
+
+          <VictoryAxis dependentAxis
+            style={{
+              tickLabels: {
+                fontSize: '14px'
+              }
+            }}
           />
 
           <VictoryLine
             style={{
-              data: { stroke: "aaaaaa" },
+              data: { stroke: " e67e22 " },
+            }}
+            labels={ (d) => `${d.y}\u2103` }
+            labelComponent={ <VictoryTooltip/> }
+            data = { this.state.vatTempData }
+          />
+
+          <VictoryLine
+            style={{
+              data: { stroke: " 34495e " },
             }}
             labels={(d) => `${d.y}\u2103` }
             labelComponent={<VictoryTooltip/>}
