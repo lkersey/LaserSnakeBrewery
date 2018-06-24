@@ -11,14 +11,14 @@ class Chart extends Component {
     this.state = {
       chartWidth: 0,
       chartHeight: 0,
-      inputData:[],
-      vatTempData:[],
-      fridgeTempData:[]
+      inputData: [],
+      vatTempData: [],
+      fridgeTempData: []
     }
   }
 
   getData() {
-    axios.get('http://localhost:5000/status')
+    axios.get('http://localhost:5000/history')
     .then(res => {
       const data = res.data;
       this.setState({ inputData:data });
@@ -63,7 +63,7 @@ class Chart extends Component {
   render() {
     const padding = this.getPaddingValue()
     return (
-      <div>
+      <div className='Chart'>
         <VictoryChart
           theme={ VictoryTheme.material }
           width= {this.state.chartWidth}
