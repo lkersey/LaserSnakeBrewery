@@ -9,6 +9,8 @@ class Chart extends Component {
   constructor(props) {
     super(props);
     this.state = {
+      chartWidth: 0,
+      chartHeight: 0,
       inputData:[],
       vatTempData:[],
       fridgeTempData:[]
@@ -36,19 +38,31 @@ class Chart extends Component {
 
   componentDidMount() {
     this.getData()
-    this.interval = setInterval(() => this.getData(), 1000 * 60);
+    this.interval = setInterval(() => this.getData(), 1000 * 60 );
+    this.setState({ chartWidth: window.innerWidth });
+    this.setState({ chartHeight: window.innerHeight });
+  }
+
+  getPaddingValue() {
+    return this.state.chartHeight / 10;
   }
 
   render() {
+    const padding = this.getPaddingValue()
     return (
       <div>
-      {this.state.vatTempData.length}
         <VictoryChart theme={ VictoryTheme.material }
+        width= {this.state.chartWidth}
+        height= {this.state.chartHeight / 2}
+
         style= {{
-          parent: { maxWidth: "60%"}
+          parent: {}
         }}
         padding= {{
-          bottom: 100, left: 100, right: 50, top: 50
+          bottom: padding,
+          left: padding,
+          right: padding,
+          top: padding
         }}
         containerComponent={<VictoryVoronoiContainer/>}
         >
@@ -57,14 +71,14 @@ class Chart extends Component {
         tickCount={10}
         style={{
           tickLabels: {
-            padding: 20, angle: -45, fontSize: '8px'
+            padding: 30, angle: -45, fontSize: '14px'
           }
         }} />
 
         <VictoryAxis dependentAxis
         style={{
           tickLabels: {
-            fontSize: '8px'
+            fontSize: '14px'
           }
         }} />
 
