@@ -1,0 +1,13 @@
+.title {
+  font-size: small;
+  text-align: left;
+  vertical-align: top;
+  margin-bottom: 10px;
+}
+
+
+.value {
+  font-size: 100%;
+  margin:10px 10px 10px ;
+  vertical-align: bottom;
+}

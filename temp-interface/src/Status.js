@@ -3,7 +3,7 @@ import './Status.css';
 import axios from 'axios';
 import moment from 'moment';
 
-import Timestamp from './Timestamp';
+import StatusBox from './StatusBox';
 class Status extends Component {
 
   constructor(props) {
@@ -52,11 +52,25 @@ class Status extends Component {
     return (
       <div className='Status'>
         <div className='wrapper'>
-          <div className="box box1"><Timestamp timestamp={this.state.timestamp}/></div>
-          <div className="box box2">Set temp: { this.state.setTemp }</div>
-          <div className="box box3">Fridge temp: { this.state.fridgeTemp }</div>
-          <div className="box box4">Vat temp: { this.state.vatTemp }</div>
-          <div className="box box5">State: { this.state.phase }</div>
+          <div className="box box1">
+            <StatusBox value={this.state.timestamp}/>
+          </div>
+          <div className="box box2">
+            <StatusBox title='Set temp'
+              value={ this.state.setTemp + '\u2103'} />
+          </div>
+          <div className="box box3">
+            <StatusBox title='Fridge temp'
+              value={ this.state.fridgeTemp + '\u2103'} />
+          </div>
+          <div className="box box4">
+            <StatusBox title='Vat temp'
+              value={ this.state.vatTemp + '\u2103'} />
+          </div>
+          <div className="box box5">
+            <StatusBox title='State'
+              value={ this.state.phase } />
+          </div>
         </div>
       </div>
     )
