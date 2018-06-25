@@ -1,0 +1,9 @@
+[Unit]
+Description=Brew status api
+
+[Service]
+User=pi
+ExecStart=/usr/bin/python /home/pi/laser-snake-temp-control/python/app.py
+
+[Install]
+WantedBy=multi-user.target

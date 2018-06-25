@@ -2,7 +2,7 @@ import sqlite3
 import time
 import numpy as np
 
-db = 'fermentation_log.db'
+db = '/home/pi/laser-snake-temp-control/fermentation_log.db'
 
 
 def get_db(db_file):

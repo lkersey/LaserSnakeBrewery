@@ -1,0 +1,9 @@
+[Unit]
+Description=Serial listener
+
+[Service]
+User=pi
+ExecStart=/usr/bin/python /home/pi/laser-snake-temp-control/python/read-serial.py
+
+[Install]
+WantedBy=multi-user.target
