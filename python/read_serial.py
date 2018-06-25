@@ -3,7 +3,7 @@ import re
 import sql
 import time
 
-ser = serial.Serial('/dev/ttyACM0', 9600)
+ser = serial.Serial('/dev/ARDUINO', 9600)
 
 #Expected format to extract from the serial port
 expected = r"temperature_status;[0-9.]+;[0-9.]+;[0-9.]+;[0-9]"

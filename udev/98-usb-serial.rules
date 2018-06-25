@@ -1,0 +1,3 @@
+# Rule for mapping arduino to /dev/ARDUINO
+# Saved in /etc/udev/rules.d
+SUBSYSTEMS=="usb", ATTR{manufacturer}=="Arduino (www.arduino.cc)", SYMLINK+="ARDUINO"
