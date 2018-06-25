@@ -2,8 +2,9 @@ import React, { Component } from 'react';
 import './Status.css';
 import axios from 'axios';
 import moment from 'moment';
-
 import StatusBox from './StatusBox';
+import laserSnakeLogo from './laser-snake-logo.svg';
+
 class Status extends Component {
 
   constructor(props) {
@@ -18,7 +19,7 @@ class Status extends Component {
   }
 
   getData() {
-    axios.get('http://localhost:5000/status')
+    axios.get('https://lasersnake.duckdns.org/api/status')
     .then(res => {
       const data = res.data;
       const vatTemp = data.map(d => d.vat_temp);
@@ -51,7 +52,11 @@ class Status extends Component {
   render() {
     return (
       <div className='Status'>
+      <div>
+        <img src={laserSnakeLogo} />
+      </div>
         <div className='wrapper'>
+
           <div className="box box1">
             <StatusBox value={this.state.timestamp}/>
           </div>

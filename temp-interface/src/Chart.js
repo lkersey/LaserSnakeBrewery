@@ -18,7 +18,7 @@ class Chart extends Component {
   }
 
   getData() {
-    axios.get('http://localhost:5000/history')
+    axios.get('https://lasersnake.duckdns.org/api/history')
     .then(res => {
       const data = res.data;
       this.setState({ inputData:data });
