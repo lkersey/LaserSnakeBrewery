@@ -25,7 +25,7 @@ def setup_db(db_file):
 def get_history():
     conn, c = get_db(db)
     try:
-        c.execute('''SELECT * FROM fermentation_log ORDER BY timestmp DESC limit 100 ''')
+        c.execute('''SELECT * FROM fermentation_log ORDER BY timestmp DESC limit 500 ''')
         ret = np.asarray(c.fetchall())
     except:
         print 'Problem retrieving status'
