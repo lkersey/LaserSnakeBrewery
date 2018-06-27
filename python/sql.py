@@ -4,7 +4,6 @@ import numpy as np
 
 db = '/home/pi/laser-snake-temp-control/fermentation_log.db'
 
-
 def get_db(db_file):
     conn = sqlite3.connect(db_file)
     c = conn.cursor()
@@ -22,10 +21,16 @@ def setup_db(db_file):
     )
     conn.commit()
 
+
 def get_history():
+    """
+    Select all points in the database that were added within the last
+    24 hours. 
+    """
     conn, c = get_db(db)
+    current_time = time.time()
     try:
-        c.execute('''SELECT * FROM fermentation_log ORDER BY timestmp DESC limit 1000 ''')
+        c.execute('''SELECT * FROM fermentation_log WHERE timestmp > (current_time - 86400)''')
         ret = np.asarray(c.fetchall())
     except:
         print 'Problem retrieving status'
@@ -41,6 +46,7 @@ def get_history():
         result.append({'timestamp':timestamp, 'vat_temp':vat_temp,
             'fridge_temp':fridge_temp, 'set_temp':set_temp, 'phase':phase})
     return result
+
 
 def get_status():
     """
@@ -66,7 +72,6 @@ def get_status():
     return result
 
 
-
 def write_status(timestamp, vat_temp, fridge_temp, set_temp, phase):
     try:
         conn, c = get_db(db)
@@ -75,6 +80,7 @@ def write_status(timestamp, vat_temp, fridge_temp, set_temp, phase):
         conn.commit()
     except:
         print 'Problem inserting data into' + str(db)
+
 
 setup_db(db)
 #write_status(time.time(), 12.34, 11.18, 25.00, 1)
