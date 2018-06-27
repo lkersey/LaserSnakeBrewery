@@ -1,6 +1,7 @@
 #include <SPI.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <RunningMedian.h>
 
 // either debug OR production mode, as both use the serial 
 #define DEBUG false
@@ -38,9 +39,6 @@ int state = STATE_IDLE; //initialise in idle
 // set up 1-wire probes
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature sensors(&oneWire);
-/* Address of 1-wire sensors can be found by following the tutorial at 
- * http://henrysch.capnfatz.com/henrys-bench/arduino-temperature-measurements/ds18b20-arduino-user-manual-introduction-and-contents/ds18b20-user-manual-part-2-getting-the-device-address/
- */
 //DeviceAddress AIR_TEMP_SENSOR = {0x28, 0xFF, 0x7A, 0xF6, 0x82, 0x16, 0x03, 0x69};
 //DeviceAddress VAT_TEMP_SENSOR = {0x28, 0xFF, 0xE3, 0x9C, 0x82, 0x16, 0x04, 0x25};
 DeviceAddress AIR_TEMP_SENSOR = {0x28, 0xFF, 0x16, 0x8D, 0x87, 0x16, 0x03, 0x50}; //Test sensor A
@@ -55,13 +53,15 @@ unsigned long last_temp_request = 0;
 bool waiting_for_conversion = false;
 unsigned long CONVERSION_DELAY = 1000; //time allocated for temperature conversion
 unsigned long MEAS_INTERVAL = 1000; //take temperature measurement every 1s
+RunningMedian vatTempMedian = RunningMedian(60);
+RunningMedian airTempMedian = RunningMedian(60);
+
+unsigned long PUBLISH_PERIOD = 60000; //Publish values every minute
+unsigned long last_publish = 0;
 
 // Initialisations  
 const int VAT_ID = 1;
 const int AIR_ID = 2;
-//String vat_payload;
-//String air_payload;
-
 
 void setup() {
   Serial.begin(9600);
@@ -246,22 +246,26 @@ void loop() {
     vat_temp = sensors.getTempC(VAT_TEMP_SENSOR);
     air_temp = sensors.getTempC(AIR_TEMP_SENSOR);
     waiting_for_conversion = false;
+
+    vatTempMedian.add(vat_temp);
+    airTempMedian.add(air_temp);
     
-   /* sent data to serial for collection from python script. 
-   */
-    #if (PRODUCTION)
-      //vat_payload = vat_temp;
-      //air_payload = air_temp;
-      Serial.print("temperature_status;");
-      Serial.print(vat_temp);
-      Serial.print(";");
-      Serial.print(air_temp);
-      Serial.print(";");
-      Serial.print(set_temp);
-      Serial.print(";");
-      Serial.println(state);
-    #endif
-    
+     /* sent data to serial for collection from python script. 
+     */
+     if ( (millis() - last_publish) > PUBLISH_PERIOD) {
+      #if (PRODUCTION)
+        Serial.print("temperature_status;");
+        Serial.print(vatTempMedian.getMedian());
+        Serial.print(";");
+        Serial.print(airTempMedian.getMedian());
+        Serial.print(";");
+        Serial.print(set_temp);
+        Serial.print(";");
+        Serial.println(state);
+      #endif
+      last_publish = millis();
+     }
+     
     //Send an update to the Serial monitor if DEBUG mode is on
     #if (DEBUG) 
       status_update();
