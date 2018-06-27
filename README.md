@@ -10,7 +10,7 @@ To improve brew product quality, our home-brew system needed more precise temper
 <ul>
   <li> Paul Stoffregen's <a href="https://github.com/PaulStoffregen/OneWire">OneWire</a> </li>
   <li> Miles Burton's <a href="https://github.com/milesburton/Arduino-Temperature-Control-Library">DallasTemperature</a></li>
-  <li> The <a ref="https://playground.arduino.cc/Main/RunningMedian">running median Arduino library</a></li>
+  <li> The <a href="https://playground.arduino.cc/Main/RunningMedian">running median Arduino library</a></li>
 </ul>
 
 ## Materials needed
