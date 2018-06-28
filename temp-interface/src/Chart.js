@@ -56,23 +56,28 @@ class Chart extends Component {
     })
   }
 
-  getPaddingValue() {
+  getBottomPaddingValue() {
     return this.state.chartHeight / 5;
   }
 
+  getPaddingValue() {
+    return this.state.chartHeight / 15;
+  }
+
   render() {
+    const bottomPadding = this.getBottomPaddingValue()
     const padding = this.getPaddingValue()
     return (
-      <div>
-        <VictoryChart className='Chart'
+      <div class="Chart">
+        <VictoryChart
           theme={ VictoryTheme.material }
           width= {this.state.chartWidth}
-          height= {this.state.chartHeight / 2}
+          height= {this.state.chartHeight / 1.5}
           style= {{
             parent: {}
           }}
           padding= {{
-            bottom: padding,
+            bottom: bottomPadding,
             left: padding,
             right: padding,
             top: padding
@@ -84,7 +89,7 @@ class Chart extends Component {
             tickCount={6}
             style={{
               tickLabels: {
-                padding: 30, angle: -45, fontSize: '14px'
+                padding: 50, angle: -45, fontSize: '14px'
               }
             }}
           />
@@ -97,11 +102,13 @@ class Chart extends Component {
             }}
           />
 
-          <VictoryLine
+          <VictoryArea
             style={{
               data: {
-                stroke: "b57400 ",
-                strokeWidth: 4
+                fill: "#b57400",
+                fillOpacity: 0.2,
+                stroke: " #b57400",
+                strokeWidth: 2
               },
             }}
             labels={(d) => `${d.y}\u2103` }
@@ -109,10 +116,12 @@ class Chart extends Component {
             data = {this.state.fridgeTempData}
           />
 
-          <VictoryLine
+          <VictoryArea
             style={{
               data: {
-                stroke: " 964100 ",
+                fill: "#964100",
+                fillOpacity: 0.4,
+                stroke: "#964100",
                 strokeWidth: 4
              },
             }}
@@ -121,18 +130,8 @@ class Chart extends Component {
             data = { this.state.vatTempData }
           />
 
-          <VictoryLegend x={125} y={50}
-            orientation="vertical"
-    gutter={20}
-    style={{ border: { stroke: "black" }, title: {fontSize: 20 } }}
-    data={[
-      { name: "One", symbol: { fill: "tomato", type: "star" } },
-      { name: "Two", symbol: { fill: "orange" } },
-      { name: "Three", symbol: { fill: "gold" } }
-    ]}
-  />
-
         </VictoryChart>
+
       </div>
     )
   }

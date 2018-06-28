@@ -1,13 +1,6 @@
 .Chart {
   text-align: center;
-  color: #289;
-  background-color: #ffffff;.
-  margin: 0px;
+  color: #111;
   border-radius: 5px;
   height: 100% !important;
-}
-
-.Column {
-  float: left;
-  width: 20%
 }

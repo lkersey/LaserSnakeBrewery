@@ -1,13 +1,14 @@
-.Status {
-  text-align: center;
-  margin: 20px;
+.logo {
+  padding-top: 15%;
+  height:auto;
 }
 
 .wrapper {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-rows: auto;
   grid-gap: 10px;
-  padding: 10px;
+  padding: 0px 5px 5px 5px;
 }
 
 .box{

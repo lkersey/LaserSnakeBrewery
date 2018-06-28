@@ -3,6 +3,7 @@ import './Status.css';
 import axios from 'axios';
 import moment from 'moment';
 import StatusBox from './StatusBox';
+import { VictoryLegend } from 'victory';
 import laserSnakeLogo from './laser-snake-logo.svg';
 
 class Status extends Component {
@@ -52,31 +53,38 @@ class Status extends Component {
   render() {
     return (
       <div className='Status'>
-      <div>
-        <img src={laserSnakeLogo} alt="" />
-      </div>
         <div className='wrapper'>
+
+          <div className='box logo'>
+            <img src={laserSnakeLogo} alt=""/>
+          </div>
 
           <div className="box box1">
             <StatusBox title="last updated"
               value={this.state.timestamp}/>
           </div>
+
           <div className="box box2">
             <StatusBox title='Set temp'
               value={ this.state.setTemp + '\u2103'} />
           </div>
+
           <div className="box box3">
-            <StatusBox title='Fridge temp'
-              value={ this.state.fridgeTemp + '\u2103'} />
-          </div>
-          <div className="box box4">
             <StatusBox title='Vat temp'
               value={ this.state.vatTemp + '\u2103'} />
           </div>
+
+          <div className="box box4">
+            <StatusBox title='Fridge temp'
+              value={ this.state.fridgeTemp + '\u2103'} />
+          </div>
+
           <div className="box box5">
             <StatusBox title='State'
               value={ this.state.phase } />
           </div>
+
+
         </div>
       </div>
     )
