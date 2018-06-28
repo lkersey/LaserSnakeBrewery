@@ -106,23 +106,35 @@ class Chart extends Component {
             style={{
               data: {
                 stroke: "#964100",
-                strokeWidth: 4
+                strokeWidth: 3
              },
+             labels: {
+               fill: "#f8f3f0",
+               fontSize: '20px'
+             }
             }}
-            labels={ (d) => `${d.y}\u2103` }
-            labelComponent={ <VictoryTooltip/> }
-            data = { this.state.vatTempData }
+            labels={ (d) => `Vat temp: ${d.y}\u2103` }
+            labelComponent={ <VictoryTooltip
+                flyoutStyle={{ stroke: (d) => "#964100",
+                              fill: (d) => "#964100"}} /> }
+              data = { this.state.vatTempData }
           />
 
           <VictoryLine
             style={{
               data: {
-                stroke: "#758a5a",
-                strokeWidth: 2
+                stroke: "#4973AB",
+                strokeWidth: 3
               },
+              labels: {
+                fill: "#f8f3f0",
+                fontSize: '20px'
+              }
             }}
-            labels={(d) => `${d.y}\u2103` }
-            labelComponent={ <VictoryTooltip/> }
+            labels={(d) => `Fridge temp: ${d.y}\u2103` }
+            labelComponent={ <VictoryTooltip
+              flyoutStyle={{ stroke: (d) => "#4973AB",
+                             fill: (d) => "#4973AB"}} /> }
             data = {this.state.fridgeTempData}
           />
 

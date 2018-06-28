@@ -68,13 +68,13 @@ class Status extends Component {
           </div>
 
           <div className="box box3">
-            <StatusBox title='Vat temp'
-              value={ this.state.vatTemp + '\u2103'} />
+            <StatusBox title='Fridge temp'
+              value={ this.state.fridgeTemp + '\u2103'} />
           </div>
 
           <div className="box box4">
-            <StatusBox title='Fridge temp'
-              value={ this.state.fridgeTemp + '\u2103'} />
+            <StatusBox title='Vat temp'
+              value={ this.state.vatTemp + '\u2103'} />
           </div>
 
           <div className="box box5">
