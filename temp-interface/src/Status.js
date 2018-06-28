@@ -3,7 +3,6 @@ import './Status.css';
 import axios from 'axios';
 import moment from 'moment';
 import StatusBox from './StatusBox';
-import { VictoryLegend } from 'victory';
 import laserSnakeLogo from './laser-snake-logo.svg';
 
 class Status extends Component {
@@ -52,7 +51,6 @@ class Status extends Component {
 
   render() {
     return (
-      <div className='Status'>
         <div className='wrapper'>
 
           <div className='box logo'>
@@ -85,7 +83,6 @@ class Status extends Component {
           </div>
 
         </div>
-      </div>
     )
   }
 }
