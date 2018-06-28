@@ -1,13 +1,12 @@
 .title {
   font-size: small;
   text-align: left;
-  vertical-align: top;
-  margin-bottom: 10px;
+  text-transform: uppercase;
 }
 
 
 .value {
-  font-size: 200%;
-  margin:10px 10px 10px 10px;
-  vertical-align: center;
-}
+  font-size: 150%;
+  padding: 10% 15%;
+  text-align: center;
+  }

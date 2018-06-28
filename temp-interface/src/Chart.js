@@ -81,7 +81,7 @@ class Chart extends Component {
         >
 
           <VictoryAxis
-            tickCount={10}
+            tickCount={6}
             style={{
               tickLabels: {
                 padding: 30, angle: -45, fontSize: '14px'

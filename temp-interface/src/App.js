@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React from 'react';
 import Chart from './Chart'
 import Status from './Status'
 import './App.css'

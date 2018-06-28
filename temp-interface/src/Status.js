@@ -33,9 +33,9 @@ class Status extends Component {
       } else if (phase == 1.0) {
         phase = 'Idle';
       } else if (phase == 2.0) {
-        phase = 'Heating';
-      } else if (phase == 3.0) {
         phase = 'Cooling';
+      } else if (phase == 3.0) {
+        phase = 'Heating';
       } else {
         phase = 'Relax';
       }
@@ -53,12 +53,13 @@ class Status extends Component {
     return (
       <div className='Status'>
       <div>
-        <img src={laserSnakeLogo} />
+        <img src={laserSnakeLogo} alt="" />
       </div>
         <div className='wrapper'>
 
           <div className="box box1">
-            <StatusBox value={this.state.timestamp}/>
+            <StatusBox title="last updated"
+              value={this.state.timestamp}/>
           </div>
           <div className="box box2">
             <StatusBox title='Set temp'
