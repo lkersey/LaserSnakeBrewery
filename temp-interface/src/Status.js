@@ -26,7 +26,7 @@ class Status extends Component {
       const setTemp = data.map(d => d.set_temp);
       const fridgeTemp = data.map(d => d.fridge_temp);
       const timestamp = data.map(d =>
-        moment(d.timestamp * 1000).format('H:mm a'));
+        moment(d.timestamp * 1000).format('MMM Do H:mm a'));
       var phase = data.map(d=> d.phase);
       if (phase == -1.0) {
         phase = 'Error';
