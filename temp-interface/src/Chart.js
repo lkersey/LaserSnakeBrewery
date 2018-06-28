@@ -24,11 +24,11 @@ class Chart extends Component {
       this.setState({ inputData:data });
 
       const vatTemp = this.state.inputData.map(d =>
-        ({x: moment(d.timestamp * 1000).format('H:mm:ss a'),
+        ({x: moment(d.timestamp * 1000).format('MMM Do H:mm a'),
         y: d.vat_temp})
       );
       const fridgeTemp = this.state.inputData.map(d =>
-        ({x: moment(d.timestamp * 1000).format('H:mm:ss a'),
+        ({x: moment(d.timestamp * 1000).format('MMM Do H:mm a'),
         y: d.fridge_temp})
       );
       this.setState({ vatTempData:vatTemp });
@@ -57,7 +57,7 @@ class Chart extends Component {
   }
 
   getPaddingValue() {
-    return this.state.chartHeight / 10;
+    return this.state.chartHeight / 5;
   }
 
   render() {
