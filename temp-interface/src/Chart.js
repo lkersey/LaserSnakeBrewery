@@ -61,7 +61,7 @@ class Chart extends Component {
   }
 
   getPaddingValue() {
-    return this.state.chartHeight / 15;
+    return this.state.chartHeight / 10;
   }
 
   render() {
@@ -102,25 +102,9 @@ class Chart extends Component {
             }}
           />
 
-          <VictoryArea
+          <VictoryLine
             style={{
               data: {
-                fill: "#b57400",
-                fillOpacity: 0.2,
-                stroke: " #b57400",
-                strokeWidth: 2
-              },
-            }}
-            labels={(d) => `${d.y}\u2103` }
-            labelComponent={<VictoryTooltip/>}
-            data = {this.state.fridgeTempData}
-          />
-
-          <VictoryArea
-            style={{
-              data: {
-                fill: "#964100",
-                fillOpacity: 0.4,
                 stroke: "#964100",
                 strokeWidth: 4
              },
@@ -128,6 +112,18 @@ class Chart extends Component {
             labels={ (d) => `${d.y}\u2103` }
             labelComponent={ <VictoryTooltip/> }
             data = { this.state.vatTempData }
+          />
+
+          <VictoryLine
+            style={{
+              data: {
+                stroke: "#758a5a",
+                strokeWidth: 2
+              },
+            }}
+            labels={(d) => `${d.y}\u2103` }
+            labelComponent={ <VictoryTooltip/> }
+            data = {this.state.fridgeTempData}
           />
 
         </VictoryChart>

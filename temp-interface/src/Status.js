@@ -3,6 +3,7 @@ import './Status.css';
 import axios from 'axios';
 import moment from 'moment';
 import StatusBox from './StatusBox';
+import LogoDisplay from './LogoDisplay';
 import { VictoryLegend } from 'victory';
 import laserSnakeLogo from './laser-snake-logo.svg';
 import { Legend, Line } from 'recharts';
@@ -57,7 +58,7 @@ class Status extends Component {
         <div className='wrapper'>
 
           <div className='box logo'>
-            <img src={laserSnakeLogo} alt=""/>
+            <LogoDisplay/>
           </div>
 
           <div className="box box1">
