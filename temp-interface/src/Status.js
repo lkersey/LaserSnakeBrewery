@@ -5,6 +5,7 @@ import moment from 'moment';
 import StatusBox from './StatusBox';
 import { VictoryLegend } from 'victory';
 import laserSnakeLogo from './laser-snake-logo.svg';
+import { Legend, Line } from 'recharts';
 
 class Status extends Component {
 
@@ -83,7 +84,6 @@ class Status extends Component {
             <StatusBox title='State'
               value={ this.state.phase } />
           </div>
-
 
         </div>
       </div>
