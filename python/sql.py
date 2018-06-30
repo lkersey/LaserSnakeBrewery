@@ -28,10 +28,10 @@ def get_history():
     24 hours.
     """
     conn, c = get_db(db)
-    current_time = time.time()
+    time_frame = time.time() - 86400.0
     try:
-        c.execute('''SELECT * FROM fermentation_log WHERE timestmp > (current_time - 400)
-                ORDER BY timestmp ASC''')
+        c.execute('''SELECT * FROM fermentation_log WHERE timestmp>?
+                ORDER BY timestmp ASC''', (time_frame,))
         ret = np.asarray(c.fetchall())
     except:
         print 'Problem retrieving status'
