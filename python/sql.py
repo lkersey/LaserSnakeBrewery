@@ -25,12 +25,12 @@ def setup_db(db_file):
 def get_history():
     """
     Select all points in the database that were added within the last
-    24 hours. 
+    24 hours.
     """
     conn, c = get_db(db)
     current_time = time.time()
     try:
-        c.execute('''SELECT * FROM fermentation_log WHERE timestmp > (current_time - 86400)
+        c.execute('''SELECT * FROM fermentation_log WHERE timestmp > (current_time - 400)
                 ORDER BY timestmp ASC''')
         ret = np.asarray(c.fetchall())
     except:
