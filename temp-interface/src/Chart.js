@@ -14,7 +14,10 @@ class Chart extends Component {
       inputData: [],
       vatTempData: [],
       fridgeTempData: []
-    }
+    };
+    this.fridgeColor = "#4973AB";
+    this.vatColor = "#964100";
+    this.backgroundColor = "#f8f3f0";
   }
 
   getData() {
@@ -105,36 +108,36 @@ class Chart extends Component {
           <VictoryLine
             style={{
               data: {
-                stroke: "#964100",
+                stroke: this.vatColor,
                 strokeWidth: 3
              },
              labels: {
-               fill: "#f8f3f0",
+               fill: this.backgroundColor,
                fontSize: '20px'
              }
             }}
             labels={ (d) => `Vat temp: ${d.y}\u2103` }
             labelComponent={ <VictoryTooltip
-                flyoutStyle={{ stroke: (d) => "#964100",
-                              fill: (d) => "#964100"}} /> }
+                flyoutStyle={{ stroke: (d) => this.vatColor,
+                              fill: (d) => this.vatColor}} /> }
               data = { this.state.vatTempData }
           />
 
           <VictoryLine
             style={{
               data: {
-                stroke: "#4973AB",
+                stroke: this.fridgeColor,
                 strokeWidth: 3
               },
               labels: {
-                fill: "#f8f3f0",
+                fill: this.backgroundColor,
                 fontSize: '20px'
               }
             }}
             labels={(d) => `Fridge temp: ${d.y}\u2103` }
             labelComponent={ <VictoryTooltip
-              flyoutStyle={{ stroke: (d) => "#4973AB",
-                             fill: (d) => "#4973AB"}} /> }
+              flyoutStyle={{ stroke: (d) => this.fridgeColor,
+                             fill: (d) => this.fridgeColor}} /> }
             data = {this.state.fridgeTempData}
           />
 
