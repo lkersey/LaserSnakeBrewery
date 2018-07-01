@@ -49,6 +49,7 @@ class Chart extends Component {
   }
 
   componentWillUnmount() {
+    clearInterval(this.interval);
     window.removeEventListener('resize', this.updateDimensions.bind(this));
 }
 

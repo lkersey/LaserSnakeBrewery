@@ -49,6 +49,10 @@ class Status extends Component {
     this.interval = setInterval(() => this.getData(), 1000 * 60 );
   }
 
+  componentWillUnmount() {
+    clearInterval(this.interval)
+  }
+
   render() {
     return (
         <div className='wrapper'>
