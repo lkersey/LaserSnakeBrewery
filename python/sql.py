@@ -87,5 +87,3 @@ def write_status(timestamp, vat_temp, fridge_temp, set_temp, phase):
 
 
 setup_db(db)
-write_status(time.time(), -1, 1, 1, 1)
-get_status()
