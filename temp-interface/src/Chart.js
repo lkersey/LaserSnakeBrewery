@@ -30,6 +30,7 @@ class Chart extends Component {
         ({x: moment(d.timestamp * 1000).format('MMM Do H:mm a'),
         y: d.vat_temp})
       );
+
       const fridgeTemp = this.state.inputData.map(d =>
         ({x: moment(d.timestamp * 1000).format('MMM Do H:mm a'),
         y: d.fridge_temp})
@@ -40,11 +41,10 @@ class Chart extends Component {
   }
 
   componentDidMount() {
-    this.getData()
+    this.getData();
     this.interval = setInterval(() => this.getData(), 1000 * 60 );
     this.setState({ chartWidth: window.innerWidth });
     this.setState({ chartHeight: window.innerHeight });
-
     window.addEventListener('resize', this.updateDimensions.bind(this));
   }
 
