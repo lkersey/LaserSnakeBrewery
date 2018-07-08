@@ -14,9 +14,9 @@ def setup_db(db_file):
     conn, c = get_db(db_file)
     c.execute('''CREATE TABLE IF NOT EXISTS fermentation_log
     (timestmp NUMBER PRIMARY KEY,
-     vat_temp NUMBER NOT NULL,
-     fridge_temp NUMBER NOT NULL,
-     set_temp NUMBER NOT NULL,
+     vat_temp FLOAT NOT NULL,
+     fridge_temp FLOAT NOT NULL,
+     set_temp FLOAT NOT NULL,
      phase NUMBER NOT NULL)'''
     )
     conn.commit()
@@ -70,6 +70,7 @@ def get_status():
         phase = r[4]
         result.append({'timestamp':timestamp, 'vat_temp':vat_temp,
             'fridge_temp':fridge_temp, 'set_temp':set_temp, 'phase':phase})
+    print result
     return result
 
 
@@ -83,4 +84,8 @@ def write_status(timestamp, vat_temp, fridge_temp, set_temp, phase):
         print 'Problem inserting data into' + str(db)
 
 
+
+
 setup_db(db)
+write_status(time.time(), -1, 1, 1, 1)
+get_status()
